@@ -1,0 +1,19 @@
+{
+    "files.defaultLanguage": "swift",
+    "keybindings": [
+        {
+            "key": "cmd+n",
+            "command": "extension.advancedNewFile"
+        }
+    ],
+    "advancedNewFile.exclude": {
+        "node_modules": true,
+        "node_modules_electron": true,
+        "dev": true,
+        "dist": true
+    },
+    "advancedNewFile.showInformationMessages": true,
+    "advancedNewFile.convenienceOptions": ["last", "current", "root"],
+    "advancedNewFile.defaultExtension": ".swift"
+}
+
