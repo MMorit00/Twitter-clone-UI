@@ -14,7 +14,9 @@
         //   .injectableView()
             // FeedView()
             // .injectableView()
-         ProfileView()
+        //  ProfileView()
+        //     .injectableView()
+        WelcomeView()
             .injectableView()
          }
 
