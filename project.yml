@@ -16,6 +16,7 @@ targets:
       - package: Inject
     settings:
       base:
+        DEVELOPMENT_TEAM: 38XZHDQFX8
         SWIFT_VERSION: 5.9
         ENABLE_TESTABILITY: YES
         GENERATE_INFOPLIST_FILE: YES

@@ -83,6 +83,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 5.9
+        DEVELOPMENT_TEAM: 38XZHDQFX8
         ENABLE_TESTABILITY: YES
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: 1.0.0

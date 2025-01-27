@@ -51,7 +51,8 @@ struct TweetCellView: View {
                                 .frame(width: geometry.frame(in: .global).width, height: 200)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
-                        .frame(height: 200) // 给 GeometryReader 固定高度
+                        .frame(height: 200)
+                        .zIndex(0)
                     }
 
                     // 互动按钮

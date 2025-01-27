@@ -14,11 +14,16 @@ watchman watch "$CURRENT_DIR"
 # 设置触发器
 echo "⚙️ Setting up trigger..."
 watchman -- trigger "$CURRENT_DIR" xcodegen-trigger \
-    -p 'name' 'Sources/**/*.swift' \
-    -p 'name' 'Sources/**/*.xib' \
-    -p 'name' 'Sources/**/*.storyboard' \
-    -p 'name' 'Sources/**' \
-    -p 'name' 'project.yml' \
+
      -- sh -c 'echo "🔄 Running XcodeGen..." && xcodegen generate && echo "✅ Done!"'
+
+# 设置文件/目录创建和删除的触发器
+echo "⚙️ Setting up creation/deletion trigger..."
+watchman -- trigger "$CURRENT_DIR" xcodegen-structure-trigger \
+    --create \
+    --delete \
+    -p 'name' 'Sources/**/*.swift' \
+    -p 'name' 'Sources/**' \
+    -- sh -c 'echo "🔄 Project structure changed, running XcodeGen..." && xcodegen generate && echo "✅ Done!"'
 
 echo "✅ Watch setup complete! Changes will trigger XcodeGen automatically."

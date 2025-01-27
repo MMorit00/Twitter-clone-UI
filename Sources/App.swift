@@ -7,14 +7,17 @@
    @StateObject private var injectionManager = InjectionManager.shared
      var body: some Scene {
          WindowGroup {
-          HomeView()
-             .injectableView()
+        //   MainView()
+        //      .injectableView()
 //            
         //   CreateTweetView()
         //   .injectableView()
             // FeedView()
             // .injectableView()
+         ProfileView()
+            .injectableView()
          }
+
      }
  }
 
