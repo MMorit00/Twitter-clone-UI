@@ -1,48 +1,38 @@
+@_exported import Inject
+import SwiftUI
 
+@main
+struct DemoApp: App {
+    @StateObject private var injectionManager = InjectionManager.shared
 
- import SwiftUI
- @_exported import Inject
- @main
- struct DemoApp: App {
-   @StateObject private var injectionManager = InjectionManager.shared
-     var body: some Scene {
-         WindowGroup {
-        //   MainView()
-        //      .injectableView()
-//            
-        //   CreateTweetView()
-        //   .injectableView()
-            // FeedView()
-            // .injectableView()
-        //  ProfileView()
-        //     .injectableView()
-        WelcomeView()
-            .injectableView()
-         }
-
-     }
- }
-
-
-
-
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(AuthViewModel.shared)
+                .injectableView()
+        }
+    }
+}
 
 struct ContentView: View {
+    @EnvironmentObject var viewModel: AuthViewModel
+
     var body: some View {
-        Text("awd1aw44aaawdawdwdadwddwd53aaaa")
+        if viewModel.isAuthenticated {
+            if let user = viewModel.user {
+                MainView()
+                    .injectableView()
+            }
+        } else {
+            WelcomeView()
+                .injectableView()
+        }
     }
 }
 
 #Preview {
     ContentView()
 }
-
-
-
-
-
-
-
 
 // 创建一个环境对象来管理注入状态
 final class InjectionManager: ObservableObject {
@@ -53,13 +43,13 @@ final class InjectionManager: ObservableObject {
 // 简化的视图修饰符
 extension View {
     func injectableView() -> some View {
-        self.modifier(InjectableViewModifier())
+        modifier(InjectableViewModifier())
     }
 }
 
 struct InjectableViewModifier: ViewModifier {
     @StateObject private var manager = InjectionManager.shared
-    
+
     func body(content: Content) -> some View {
         content.enableInjection()
     }
