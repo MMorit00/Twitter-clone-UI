@@ -1,5 +1,5 @@
 import Foundation
-
+//! authService 与 requestService 的差异在于 requestService 返回的是 json 数据，而 authService 返回的是 APIResponse 数据
 public class AuthService {
     // 静态域名变量
     public static var requestDomain: String = ""
@@ -193,6 +193,56 @@ public class AuthService {
             }
         }
 
+        task.resume()
+    }
+
+    // 添加 PATCH 请求方法
+    static func makePatchRequestWithAuth(
+        urlString: String,
+        requestBody: [String: Any],
+        token: String,
+        completion: @escaping (Result<Data, NetworkError>) -> Void
+    ) {
+        // 1. 创建 URL
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.invalidURL))
+            return
+        }
+
+        // 2. 创建请求
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // 3. 设置请求体
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+            request.httpBody = jsonData
+        } catch {
+            completion(.failure(.invalidURL))
+            return
+        }
+
+        // 4. 创建数据任务
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            // 检查是否有错误
+            if let error = error {
+                completion(.failure(.noData))
+                return
+            }
+
+            // 检查是否有数据
+            guard let data = data else {
+                completion(.failure(.noData))
+                return
+            }
+
+            // 返回成功结果
+            completion(.success(data))
+        }
+
+        // 5. 开始任务
         task.resume()
     }
 }

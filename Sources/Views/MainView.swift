@@ -3,8 +3,9 @@ import SwiftUI
 struct MainView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showMenu = false
+    @State private var showProfile = false  // 新增状态控制导航
     @State private var offset: CGFloat = 0
-    @State private var selectedUser: User? = nil
+    // @State private var selectedUser: User? = nil
     let user: User
     // 侧边菜单宽度（为了方便修改）
     private var menuWidth: CGFloat {
@@ -41,11 +42,13 @@ struct MainView: View {
                     .allowsHitTesting(showMenu)
 
                 // 2. 侧边菜单视图
-                SlideMenu(selectedUser: $selectedUser)
-                    .frame(width: menuWidth)
-                    .background(Color.white)
-                    .offset(x: offset - menuWidth)
-                    .zIndex(2) // 添加最高层级
+                SlideMenu(user: user, onProfileTap: {
+                    showProfile = true
+                })
+                .frame(width: menuWidth)
+                .background(Color.white)
+                .offset(x: offset - menuWidth)
+                .zIndex(2) // 添加最高层级
 
                 // 3. 用于菜单拖拽手势的透明层
                 if showMenu {
@@ -66,7 +69,7 @@ struct MainView: View {
                         .zIndex(1)
                 }
             }
-            .navigationDestination(item: $selectedUser) { user in
+            .navigationDestination(isPresented: $showProfile) {
                 ProfileView(user: user)
             }
             .toolbar(.hidden, for: .tabBar) // 只隐藏tabBar

@@ -26,7 +26,8 @@ targets:
         type: .strings
     dependencies:
       - package: Inject
-      
+      - package: Kingfisher
+
     settings:
       base:
         DEVELOPMENT_TEAM: 38XZHDQFX8
@@ -45,3 +46,6 @@ packages:
   Inject:
     url: https://github.com/krzysztofzablocki/Inject.git
     from: 1.2.4
+  Kingfisher:
+    url: https://github.com/onevcat/Kingfisher
+    from: 8.1.4

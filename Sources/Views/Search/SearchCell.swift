@@ -25,4 +25,6 @@ struct SearchCell: View {
             print("Trend topic tapped")
         }
     }
+
+    
 }

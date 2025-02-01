@@ -3,19 +3,19 @@ import Foundation
 struct User: Codable, Identifiable, Hashable {
     // 对应MongoDB的_id
     let id: String
-    let username: String
-    let name: String
-    let email: String
+    var username: String
+    var name: String
+    var email: String
     
     // 可选字段
-    let location: String?
-    let bio: String?
-    let website: String?
-    let avatarExists: Bool?
+    var location: String?
+    var bio: String?
+    var website: String?
+    var avatarExists: Bool?
     
     // 关注关系
-    let followers: [String]
-    let following: [String]
+    var followers: [String]
+    var following: [String]
     
     // CodingKeys用于处理MongoDB的_id映射
     enum CodingKeys: String, CodingKey {

@@ -1,4 +1,5 @@
 import SwiftUI
+import Kingfisher
 
 // 添加在文件顶部
 struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -19,15 +20,21 @@ struct TabBarOffsetPreferenceKey: PreferenceKey {
 struct ProfileView: View {
     // MARK: - Properties
 
-    let user: User
+    @StateObject var viewModel: ProfileViewModel
     @ObserveInjection var inject
     @State var offset: CGFloat = 0 // 监测最顶端 Banner 的滚动偏移
     @State var titleOffset: CGFloat = 0 // 监测 Profile Data 或标题区域的滚动偏移
     @State var tabBarOffset: CGFloat = 0 // 监测 TabBar 的滚动偏移
+    @State private var showEditProfile = false // 添加导航状态
 
     @State var currentTab = "Tweets"
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
+
+    // 添加初始化方法
+    init(user: User) {
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(user: user))
+    }
 
     // MARK: - Body
 
@@ -41,7 +48,11 @@ struct ProfileView: View {
 
                     ZStack {
                         // 背景 Banner
-                        Image("SSC_banner")
+                        KFImage(URL(string: viewModel.user.bannerURL ?? ""))
+                            .placeholder {
+                                Rectangle()
+                                    .fill(Color(.systemGray6))
+                            }
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(
@@ -56,10 +67,10 @@ struct ProfileView: View {
 
                         // Title
                         VStack(spacing: 5) {
-                            Text(user.name)
+                            Text(viewModel.user.name)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
-                            Text("\(user.followers.count) Followers")
+                            Text("\(viewModel.user.followers.count) Followers")
                                 .foregroundColor(.white)
                         }
                         .offset(y: 120)
@@ -83,7 +94,12 @@ struct ProfileView: View {
                     HStack {
                         // 头像
                         ZStack {
-                            Image("blankpp") // 替换成你自己的头像占位
+                            KFImage(URL(string: viewModel.user.avatarURL ?? ""))
+                                .placeholder {
+                                    Image(systemName: "person.circle.fill")
+                                        .resizable()
+                                        .foregroundColor(Color(.systemGray4))
+                                }
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 75, height: 75)
@@ -91,7 +107,6 @@ struct ProfileView: View {
                                 .padding(8)
                                 .background(colorScheme == .dark ? Color.black : Color.white)
                                 .clipShape(Circle())
-                                // 同样使用 offset/scale, 与原版写法一致
                                 .offset(y: offset < 0 ? getOffset() - 20 : -20)
                                 .scaleEffect(getScale())
                         }
@@ -100,7 +115,7 @@ struct ProfileView: View {
 
                         // "Edit Profile" 按钮示例
                         Button {
-                            print("Edit Profile Tapped")
+                            showEditProfile = true
                         } label: {
                             Text("Edit Profile")
                                 .foregroundColor(.blue)
@@ -118,24 +133,24 @@ struct ProfileView: View {
                     // 用户文本资料
                     HStack {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(user.name)
+                            Text(viewModel.user.name)
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
 
-                            Text("@\(user.username)")
+                            Text("@\(viewModel.user.username)")
                                 .foregroundColor(.gray)
 
-                            Text(user.bio ?? "No bio available")
+                            Text(viewModel.user.bio ?? "No bio available")
 
                             HStack(spacing: 5) {
-                                Text("\(user.following.count)")
+                                Text("\(viewModel.user.following.count)")
                                     .foregroundColor(.primary)
                                     .fontWeight(.semibold)
                                 Text("Following")
                                     .foregroundColor(.gray)
 
-                                Text("\(user.followers.count)")
+                                Text("\(viewModel.user.followers.count)")
                                     .foregroundColor(.primary)
                                     .fontWeight(.semibold)
                                     .padding(.leading, 10)
@@ -212,7 +227,6 @@ struct ProfileView: View {
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.blue)
                             .padding(8)
-                           
                     }
                     .contentShape(Rectangle())
                 }
@@ -223,6 +237,10 @@ struct ProfileView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .ignoresSafeArea(.all, edges: .top)
         .enableInjection()
+        // 添加 sheet 导航
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView(user: $viewModel.user)
+        }
     }
 
     // MARK: - 逻辑与原 UserProfile 保持一致

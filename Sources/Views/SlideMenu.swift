@@ -1,8 +1,11 @@
 import SwiftUI
 
+
 struct SlideMenu: View {
-    @EnvironmentObject private var viewModel: AuthViewModel
-    @Binding var selectedUser: User?
+    // @EnvironmentObject private var viewModel: AuthViewModel
+    // @Binding var selectedUser: User?
+    let user: User // 改为普通属性而不是 Binding
+    var onProfileTap: () -> Void // 重命名回调更清晰
     @State private var isExpanded = false
     @ObserveInjection var inject
 
@@ -12,7 +15,7 @@ struct SlideMenu: View {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
                     Button {
-                        selectedUser = viewModel.user
+                        onProfileTap() // 触发导航回调
                     } label: {
                         HStack {
                             Circle()
@@ -21,10 +24,10 @@ struct SlideMenu: View {
                                 .padding(.bottom, 12)
 
                             VStack(alignment: .leading, spacing: 0) {
-                                Text(viewModel.user?.name ?? "")
+                                Text(user.name)
                                     .font(.system(size: 14))
                                     .padding(.bottom, 4)
-                                Text("@\(viewModel.user?.username ?? "")")
+                                Text("@\(user.username)")
                                     .font(.system(size: 12))
                                     .bold()
                                     .foregroundColor(.gray)
@@ -34,10 +37,10 @@ struct SlideMenu: View {
                     .contentShape(Rectangle())
 
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(viewModel.user?.name ?? "")
+                        Text(user.name)
                             .font(.system(size: 14))
                             .padding(.bottom, 4)
-                        Text("@\(viewModel.user?.username ?? "")")
+                        Text("@\(user.username)")
                             .font(.system(size: 12))
                             .bold()
                             .foregroundColor(.gray)
@@ -56,7 +59,7 @@ struct SlideMenu: View {
 
             // 关注信息区域
             HStack(spacing: 0) {
-                Text("\(viewModel.user?.following.count ?? 0) ")
+                Text("\(user.following.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Following")
@@ -64,7 +67,7 @@ struct SlideMenu: View {
                     .font(.system(size: 14))
                     .bold()
                     .padding(.trailing, 8)
-                Text("\(viewModel.user?.followers.count ?? 0) ")
+                Text("\(user.followers.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Followers")

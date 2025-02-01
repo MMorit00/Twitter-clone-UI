@@ -31,7 +31,9 @@ struct TopBar: View {
                     .foregroundColor(.black)
             }
             .overlay(
+              
                 Image("X")
+                
                     .resizable()
                     .scaledToFill()
                     .frame(width: 25, height: 25),
