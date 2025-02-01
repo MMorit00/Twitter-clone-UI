@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SlideMenu: View {
+    @EnvironmentObject private var viewModel: AuthViewModel
+    @Binding var selectedUser: User?
     @State private var isExpanded = false
     @ObserveInjection var inject
 
@@ -9,24 +11,39 @@ struct SlideMenu: View {
             // 顶部用户信息区域
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
-                    Circle()
-                        .fill(.gray)
-                        .frame(width: 44, height: 44)
-                        .padding(.bottom,12)
+                    Button {
+                        selectedUser = viewModel.user
+                    } label: {
+                        HStack {
+                            Circle()
+                                .fill(.gray)
+                                .frame(width: 44, height: 44)
+                                .padding(.bottom, 12)
 
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(viewModel.user?.name ?? "")
+                                    .font(.system(size: 14))
+                                    .padding(.bottom, 4)
+                                Text("@\(viewModel.user?.username ?? "")")
+                                    .font(.system(size: 12))
+                                    .bold()
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
+                    .contentShape(Rectangle())
 
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("用户名")
+                        Text(viewModel.user?.name ?? "")
                             .font(.system(size: 14))
                             .padding(.bottom, 4)
-                        Text("@username")
+                        Text("@\(viewModel.user?.username ?? "")")
                             .font(.system(size: 12))
                             .bold()
                             .foregroundColor(.gray)
-
                     }
                 }
-Spacer()
+                Spacer()
 
                 Button(action: {
                     isExpanded.toggle()
@@ -35,13 +52,11 @@ Spacer()
                         .font(.system(size: 16))
                 }
                 .padding(.top, 12)
-
             }
-
 
             // 关注信息区域
             HStack(spacing: 0) {
-                Text("8 ")
+                Text("\(viewModel.user?.following.count ?? 0) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Following")
@@ -49,7 +64,7 @@ Spacer()
                     .font(.system(size: 14))
                     .bold()
                     .padding(.trailing, 8)
-                Text("12 ")
+                Text("\(viewModel.user?.followers.count ?? 0) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Followers")
@@ -57,18 +72,17 @@ Spacer()
                     .foregroundStyle(.gray)
                     .bold()
             }
-          
-            .padding(.top, 4)
 
+            .padding(.top, 4)
 
             // 主菜单列表区域
             VStack(alignment: .leading, spacing: 0) {
                 ForEach([
                     ("person", "Profile"),
                     ("list.bullet", "Lists"),
-                    ("number", "Topics"), 
-                    ("bookmark", "Bookmarks"), 
-                    ("sparkles", "Moments")
+                    ("number", "Topics"),
+                    ("bookmark", "Bookmarks"),
+                    ("sparkles", "Moments"),
                 ], id: \.1) { icon, text in
                     HStack {
                         Image(systemName: icon)
@@ -76,25 +90,17 @@ Spacer()
                             .padding(16)
                             .padding(.leading, -16)
 
-                            
                         Text(text)
                             .font(.system(size: 18))
                             .bold()
                     }
                 }
             }
-           .padding(.vertical, 12)
-
-
-           
-
-
+            .padding(.vertical, 12)
 
             Divider()
-            .padding(.bottom, 12 + 16)
-         
-  
-            
+                .padding(.bottom, 12 + 16)
+
             // 底部区域
             VStack(alignment: .leading, spacing: 12) {
                 Text("Settings and privacy")
@@ -112,7 +118,6 @@ Spacer()
                 .font(.title3)
                 .padding(.vertical, 12)
                 .bold()
-
             }
         }
         .padding(.top, 12)

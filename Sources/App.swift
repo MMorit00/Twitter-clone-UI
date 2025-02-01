@@ -20,7 +20,7 @@ struct ContentView: View {
     var body: some View {
         if viewModel.isAuthenticated {
             if let user = viewModel.user {
-                MainView()
+                MainView(user: user)
                     .injectableView()
             }
         } else {

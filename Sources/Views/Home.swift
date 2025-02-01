@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct HomeView: View {
+  let user: User
     @ObserveInjection var inject
     @State private var selectedTab = 0
     @State private var showCreateTweetView = false 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
-                FeedView()
+                FeedView(user: user)
                     .tabItem {
                         Image(systemName: "house")
                         Text("Home")

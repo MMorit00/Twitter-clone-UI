@@ -11,9 +11,22 @@ targets:
   CloneTwitter:
     type: application
     platform: iOS
-    sources: [Sources]
+    sources:
+      - path: Sources
+        # 明确排除所有 Storyboard 文件
+        excludes:
+          - "**/*.storyboard"
+        # 特殊处理需要编译的 Swift 文件
+        type: [.swift, .m, .h, .xcdatamodeld, .xcmappingmodel]
+    # 显式指定资源文件
+    resources:
+      - path: Sources/Media.xcassets
+        type: .xcassets
+      - path: Sources/Localization
+        type: .strings
     dependencies:
       - package: Inject
+      
     settings:
       base:
         DEVELOPMENT_TEAM: 38XZHDQFX8
