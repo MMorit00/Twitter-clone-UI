@@ -3,17 +3,17 @@ import SwiftUI
 
 @main
 struct DemoApp: App {
-    @StateObject private var injectionManager = InjectionManager.shared
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(AuthViewModel.shared)
-                .injectableView()
-//          EditProfileView()
-//            .injectableView()
-        }
+  @StateObject private var injectionManager = InjectionManager.shared
+  
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environmentObject(AuthViewModel.shared)
+        .injectableView()
+      //          EditProfileView()
+      //            .injectableView()
     }
+  }
 }
 
 struct ContentView: View {

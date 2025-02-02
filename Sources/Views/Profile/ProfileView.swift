@@ -40,11 +40,7 @@ struct ProfileView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = viewModel.error {
+            if let error = viewModel.error {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
@@ -107,7 +103,6 @@ struct ProfileView: View {
                         // MARK: - 2) Profile Image + Profile Info
 
                         VStack(alignment: .leading, spacing: 12) {
-                            // Profile Image
                             HStack {
                                 KFImage(viewModel.getAvatarURL())
                                     .placeholder {
@@ -126,25 +121,33 @@ struct ProfileView: View {
 
                                 Spacer()
 
-                                // 只有当是当前用户时才显示编辑按钮
-                                if viewModel.isCurrentUser {
-                                    Button {
-                                        showEditProfile.toggle()
-                                    } label: {
-                                        Text("Edit Profile")
-                                            .font(.system(size: 14))
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.black)
-                                            .padding(.vertical, 6)
-                                            .padding(.horizontal, 12)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .stroke(Color.gray, lineWidth: 1)
-                                            )
+                                // 将按钮包装在 ZStack 中以确保它在最上层
+                                ZStack {
+                                    if viewModel.isCurrentUser {
+                                        Button {
+                                            showEditProfile.toggle()
+                                        } label: {
+                                            Text("Edit Profile")
+                                                .font(.system(size: 14))
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.black)
+                                                .padding(.vertical, 6)
+                                                .padding(.horizontal, 12)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .stroke(Color.gray, lineWidth: 1)
+                                                )
+                                        }
+                                        .zIndex(2) // 确保按钮在最上层
+                                    } else {
+                                        FollowButton()
+                                            .zIndex(2)
                                     }
                                 }
                             }
                             .padding(.horizontal)
+                            .contentShape(Rectangle()) // 确保整个区域可以接收点击
+                            .zIndex(2) // 给整个 HStack 一个较高的 zIndex
 
                             // User Info
                             VStack(alignment: .leading, spacing: 4) {
@@ -206,6 +209,7 @@ struct ProfileView: View {
                             .padding(.vertical, 8)
                             .padding(.horizontal)
                         }
+                        .zIndex(2) // 确保整个 Profile Info 在正确的层级
 
                         // MARK: - 3) TabBar (自定义滚动菜单)
 
@@ -227,7 +231,9 @@ struct ProfileView: View {
                             GeometryReader { proxy in
                                 Color.clear
                                     .preference(key: TabBarOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
+                                    .allowsHitTesting(false)
                             }
+                            .allowsHitTesting(false) // 也要给 GeometryReader 添加
                             .onPreferenceChange(TabBarOffsetPreferenceKey.self) { value in
                                 self.tabBarOffset = value
                             }
@@ -304,6 +310,34 @@ struct ProfileView: View {
     func blurViewOpacity() -> Double {
         let progress = -(offset + 80) / 150
         return Double(-offset > 80 ? progress : 0)
+    }
+
+    // 添加Follow按钮视图
+    @ViewBuilder
+    private func FollowButton() -> some View {
+        Button(action: {
+            if viewModel.isFollowing {
+                viewModel.unfollowUser()
+            } else {
+                viewModel.followUser()
+            }
+        }) {
+            Text(viewModel.isFollowing ? "Following" : "Follow")
+                .font(.system(size: 14))
+                .fontWeight(.semibold)
+                .foregroundColor(viewModel.isFollowing ? .gray : .white)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .background(
+                    Capsule()
+                        .fill(viewModel.isFollowing ? Color.clear : Color.blue)
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.gray, lineWidth: viewModel.isFollowing ? 1 : 0)
+                        )
+                )
+        }
+        .animation(.easeInOut, value: viewModel.isFollowing)
     }
 }
 

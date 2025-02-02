@@ -5,8 +5,8 @@ class ProfileViewModel: ObservableObject {
     @Published var tweets = [Tweet]()
     @Published var user: User
     @Published var shouldRefreshImage = false
-    @Published var isLoading = false
     @Published var error: Error?
+    @Published var isFollowing = false
 
     // 添加TweetCellViewModel缓存
     private var tweetViewModels: [String: TweetCellViewModel] = [:]
@@ -49,22 +49,19 @@ class ProfileViewModel: ObservableObject {
         }
 
         fetchTweets()
+        checkIfUserIsFollowed()
     }
 
     private func fetchUserData(userId: String) {
-        isLoading = true
         error = nil
 
         guard let token = UserDefaults.standard.string(forKey: "jwt") else {
             error = AuthenticationError.custom("No token found")
-            isLoading = false
             return
         }
 
         AuthService.fetchUserById(userId: userId, token: token) { [weak self] result in
             DispatchQueue.main.async {
-                self?.isLoading = false
-
                 switch result {
                 case let .success(fetchedUser):
                     self?.user = fetchedUser
@@ -94,8 +91,6 @@ class ProfileViewModel: ObservableObject {
 
     // 修改 fetchTweets 方法
     func fetchTweets() {
-        isLoading = true
-
         // 确定要请求的用户ID
         let targetUserId: String
         if let userId = userId {
@@ -103,18 +98,15 @@ class ProfileViewModel: ObservableObject {
         } else if let currentUserId = AuthViewModel.shared.user?.id {
             targetUserId = currentUserId
         } else {
-            isLoading = false
             return
         }
 
         guard let token = UserDefaults.standard.string(forKey: "jwt") else {
-            isLoading = false
             return
         }
 
         let urlString = "http://localhost:3000/tweets/user/\(targetUserId)"
         guard let url = URL(string: urlString) else {
-            isLoading = false
             return
         }
 
@@ -123,15 +115,11 @@ class ProfileViewModel: ObservableObject {
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             DispatchQueue.main.async {
-                self?.isLoading = false
-
                 guard let data = data else { return }
 
                 do {
                     let tweets = try JSONDecoder().decode([Tweet].self, from: data)
                     self?.tweets = tweets
-
-                    // 清理不再需要的viewModel
                     self?.cleanupTweetViewModels(currentTweets: tweets)
                 } catch {
                     print("Error decoding tweets: \(error)")
@@ -144,5 +132,74 @@ class ProfileViewModel: ObservableObject {
     private func cleanupTweetViewModels(currentTweets: [Tweet]) {
         let currentIds = Set(currentTweets.map { $0.id })
         tweetViewModels = tweetViewModels.filter { currentIds.contains($0.key) }
+    }
+
+    // 初始化时设置关注状态
+    private func checkIfUserIsFollowed() {
+        guard let currentUserId = AuthViewModel.shared.user?.id else { return }
+        isFollowing = user.followers.contains(currentUserId)
+    }
+
+    // Follow/Unfollow 方法
+    func followUser() {
+        guard let token = UserDefaults.standard.string(forKey: "jwt") else { return }
+        let userId = user.id
+
+        let urlString = "http://localhost:3000/users/\(userId)/follow"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // 乐观更新UI
+        isFollowing = true
+
+        URLSession.shared.dataTask(with: request) { [weak self] _, _, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Error following user: \(error)")
+                    // 如果失败,恢复原状态
+                    self?.isFollowing = false
+                    return
+                }
+
+                // 更新用户数据，但不显示 loading
+                if let userId = self?.user.id {
+                    self?.fetchUserData(userId: userId)
+                }
+            }
+        }.resume()
+    }
+
+    func unfollowUser() {
+        guard let token = UserDefaults.standard.string(forKey: "jwt") else { return }
+        let userId = user.id
+
+        let urlString = "http://localhost:3000/users/\(userId)/unfollow"
+        guard let url = URL(string: urlString) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // 乐观更新UI
+        isFollowing = false
+
+        URLSession.shared.dataTask(with: request) { [weak self] _, _, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Error unfollowing user: \(error)")
+                    // 如果失败,恢复原状态
+                    self?.isFollowing = true
+                    return
+                }
+
+                // 更新用户数据时使用
+                if let userId = self?.user.id {
+                    self?.fetchUserData(userId: userId)
+                }
+            }
+        }.resume()
     }
 }

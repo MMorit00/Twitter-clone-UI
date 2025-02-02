@@ -62,4 +62,10 @@ struct User: Codable, Identifiable, Hashable {
             lhs.username == rhs.username &&
             lhs.email == rhs.email
     }
+
+    // 添加计算属性来判断是否已关注
+    var isFollowed: Bool {
+        guard let currentUserId = AuthViewModel.shared.user?.id else { return false }
+        return followers.contains(currentUserId)
+    }
 }
