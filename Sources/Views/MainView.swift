@@ -3,11 +3,11 @@ import SwiftUI
 struct MainView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showMenu = false
-    @State private var showProfile = false  // 新增状态控制导航
+    @State private var showProfile = false // 新增状态控制导航
     @State private var offset: CGFloat = 0
     // @State private var selectedUser: User? = nil
     // let user: User
-    @EnvironmentObject private var viewModel: AuthViewModel 
+    @EnvironmentObject private var viewModel: AuthViewModel
     // 侧边菜单宽度（为了方便修改）
     private var menuWidth: CGFloat {
         UIScreen.main.bounds.width - 90
@@ -43,7 +43,7 @@ struct MainView: View {
                     .allowsHitTesting(showMenu)
 
                 // 2. 侧边菜单视图
-                SlideMenu( onProfileTap: {
+                SlideMenu(onProfileTap: {
                     showProfile = true
                 })
                 .frame(width: menuWidth)

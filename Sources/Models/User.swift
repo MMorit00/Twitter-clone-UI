@@ -16,7 +16,7 @@ struct User: Codable, Identifiable, Hashable {
     // 关注关系
     var followers: [String]
     var following: [String]
-
+    var isFollowed: Bool = false
     // CodingKeys用于处理MongoDB的_id映射
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -63,9 +63,5 @@ struct User: Codable, Identifiable, Hashable {
             lhs.email == rhs.email
     }
 
-    // 添加计算属性来判断是否已关注
-    var isFollowed: Bool {
-        guard let currentUserId = AuthViewModel.shared.user?.id else { return false }
-        return followers.contains(currentUserId)
-    }
+    
 }

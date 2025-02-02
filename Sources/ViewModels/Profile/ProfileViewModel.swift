@@ -25,7 +25,6 @@ class ProfileViewModel: ObservableObject {
         if let currentUser = AuthViewModel.shared.user {
             user = currentUser
         } else {
-            // 提供一个默认的空用户对象
             user = User(username: "", name: "", email: "")
         }
 
@@ -39,6 +38,8 @@ class ProfileViewModel: ObservableObject {
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] updatedUser in
                     self?.user = updatedUser
+                    // 确保正确设置关注状态
+                    self?.checkIfUserIsFollowed()
                     let currentTime = Date().timeIntervalSince1970
                     if currentTime - (self?.lastImageRefreshTime ?? 0) > 1.0 {
                         self?.shouldRefreshImage.toggle()
@@ -46,10 +47,9 @@ class ProfileViewModel: ObservableObject {
                     }
                 }
                 .store(in: &cancellables)
-        }
 
-        fetchTweets()
-        checkIfUserIsFollowed()
+            fetchTweets()
+        }
     }
 
     private func fetchUserData(userId: String) {
@@ -65,6 +65,8 @@ class ProfileViewModel: ObservableObject {
                 switch result {
                 case let .success(fetchedUser):
                     self?.user = fetchedUser
+                    // 获取用户数据后立即检查关注状态
+                    self?.checkIfUserIsFollowed()
                     self?.fetchTweets()
                 case let .failure(error):
                     self?.error = error
@@ -134,72 +136,87 @@ class ProfileViewModel: ObservableObject {
         tweetViewModels = tweetViewModels.filter { currentIds.contains($0.key) }
     }
 
-    // 初始化时设置关注状态
-    private func checkIfUserIsFollowed() {
+    // 修改 checkIfUserIsFollowed 方法
+    func checkIfUserIsFollowed() {
         guard let currentUserId = AuthViewModel.shared.user?.id else { return }
-        isFollowing = user.followers.contains(currentUserId)
+
+        // 检查是否在 followers 数组中
+        let isFollowed = user.followers.contains(currentUserId)
+        user.isFollowed = isFollowed
+        isFollowing = isFollowed
+
+        print("Checking follow status - isFollowed: \(isFollowed)")
     }
 
-    // Follow/Unfollow 方法
-    func followUser() {
-        guard let token = UserDefaults.standard.string(forKey: "jwt") else { return }
-        let userId = user.id
+    // 修改 follow 方法
+    func follow() {
+        guard let currentUser = AuthViewModel.shared.user else { return }
 
-        let urlString = "http://localhost:3000/users/\(userId)/follow"
-        guard let url = URL(string: urlString) else { return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        // 乐观更新UI
-        isFollowing = true
-
-        URLSession.shared.dataTask(with: request) { [weak self] _, _, error in
+        RequestServices.followingProcess(userId: user.id, isFollowing: false) { [weak self] result in
             DispatchQueue.main.async {
-                if let error = error {
-                    print("Error following user: \(error)")
-                    // 如果失败,恢复原状态
+                switch result {
+                case let .success(response):
+                    if response.message.contains("已经关注") {
+                        // 如果已经关注,确保UI状态正确
+                        self?.user.isFollowed = true
+                        self?.isFollowing = true
+                    } else {
+                        // 关注成功,更新状态
+                        self?.user.followers.append(currentUser.id)
+                        self?.user.isFollowed = true
+                        self?.isFollowing = true
+
+                        // 更新当前用户的 following
+                        if var currentUser = AuthViewModel.shared.user {
+                            currentUser.following.append(self?.user.id ?? "")
+                            AuthViewModel.shared.updateCurrentUser(currentUser)
+                        }
+                    }
+                    print("Follow response: \(response.message)")
+
+                case let .failure(error):
+                    print("Follow error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    // 修改 unfollow 方法
+    func unfollow() {
+        guard let currentUser = AuthViewModel.shared.user else { return }
+
+        RequestServices.followingProcess(userId: user.id, isFollowing: true) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case let .success(response):
+                    // 1. 更新目标用户的 followers
+                    self?.user.followers.removeAll(where: { $0 == currentUser.id })
+                    self?.user.isFollowed = false
                     self?.isFollowing = false
-                    return
-                }
 
-                // 更新用户数据，但不显示 loading
-                if let userId = self?.user.id {
-                    self?.fetchUserData(userId: userId)
-                }
-            }
-        }.resume()
-    }
+                    // 2. 更新当前用户的 following
+                    if var currentUser = AuthViewModel.shared.user {
+                        currentUser.following.removeAll(where: { $0 == self?.user.id })
+                        AuthViewModel.shared.updateCurrentUser(currentUser)
+                    }
 
-    func unfollowUser() {
-        guard let token = UserDefaults.standard.string(forKey: "jwt") else { return }
-        let userId = user.id
+                    print("Unfollow success: \(response.message)")
 
-        let urlString = "http://localhost:3000/users/\(userId)/unfollow"
-        guard let url = URL(string: urlString) else { return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        // 乐观更新UI
-        isFollowing = false
-
-        URLSession.shared.dataTask(with: request) { [weak self] _, _, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Error unfollowing user: \(error)")
-                    // 如果失败,恢复原状态
-                    self?.isFollowing = true
-                    return
-                }
-
-                // 更新用户数据时使用
-                if let userId = self?.user.id {
-                    self?.fetchUserData(userId: userId)
+                case let .failure(error):
+                    print("Unfollow error: \(error.localizedDescription)")
                 }
             }
-        }.resume()
+        }
     }
+
+//    func checkIfIsCurrentUser() {
+//        if user._id == AuthViewModel.shared.user?._id {
+//            user.isCurrentUser = true
+//        }
+//    }
+}
+
+// 添加错误响应模型
+struct ErrorResponse: Codable {
+    let message: String
 }

@@ -118,4 +118,11 @@ class AuthViewModel: ObservableObject {
             // 可以在这里添加持久化逻辑
         }
     }
+
+    // 添加更新当前用户的方法
+    func updateCurrentUser(_ updatedUser: User) {
+        DispatchQueue.main.async {
+            self.user = updatedUser
+        }
+    }
 }

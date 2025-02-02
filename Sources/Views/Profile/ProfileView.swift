@@ -312,14 +312,14 @@ struct ProfileView: View {
         return Double(-offset > 80 ? progress : 0)
     }
 
-    // 添加Follow按钮视图
+    // 修改 FollowButton 视图
     @ViewBuilder
     private func FollowButton() -> some View {
         Button(action: {
             if viewModel.isFollowing {
-                viewModel.unfollowUser()
+                viewModel.unfollow()
             } else {
-                viewModel.followUser()
+                viewModel.follow()
             }
         }) {
             Text(viewModel.isFollowing ? "Following" : "Follow")
