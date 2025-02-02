@@ -20,7 +20,7 @@ struct TabBarOffsetPreferenceKey: PreferenceKey {
 struct ProfileView: View {
     // MARK: - Properties
 
-    @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var viewModel: ProfileViewModel
     @ObserveInjection var inject
     @State var offset: CGFloat = 0 // 监测最顶端 Banner 的滚动偏移
     @State var titleOffset: CGFloat = 0 // 监测 Profile Data 或标题区域的滚动偏移
@@ -31,184 +31,221 @@ struct ProfileView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
 
+    // 初始化方法
+    init(userId: String? = nil) {
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(userId: userId))
+    }
+
     // MARK: - Body
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 15) {
-                // MARK: - 1) Banner + Title
-
-                GeometryReader { proxy in
-                    let minY = proxy.frame(in: .global).minY
-
-                    ZStack {
-                        // 背景 Banner
-                        Image("SC_banner")
-
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(
-                                width: getRect().width,
-                                height: minY > 0 ? 180 + minY : 180
-                            )
-                            .cornerRadius(0)
-
-                        // Blur
-                        BlurView()
-                            .opacity(blurViewOpacity())
-
-                        // Title
-                        VStack(spacing: 5) {
-                            Text(viewModel.user.name)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            Text("\(viewModel.user.followers.count) Followers")
-                                .foregroundColor(.white)
-                        }
-                        .offset(y: 120)
-                        .offset(y: titleOffset > 100 ? 0 : -getTitleTextOffset())
-                        .opacity(titleOffset < 100 ? 1 : 0)
-                    }
-                    .clipped()
-                    .frame(height: minY > 0 ? 180 + minY : nil)
-                    .offset(y: minY > 0 ? -minY : -minY < 80 ? 0 : -minY - 80)
-                    .onChange(of: minY) { newValue in
-                        offset = newValue
-                    }
-                }
-                .frame(height: 180)
-                .zIndex(1)
-
-                // MARK: - 2) Profile Image + Profile Info
-
+        Group {
+            if viewModel.isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = viewModel.error {
                 VStack {
-                    // 头像 + 按钮
-                    HStack {
-                        // 头像
-                        ZStack {
-                            KFImage(viewModel.getAvatarURL())
-                                .placeholder {
-                                    Image("blankpp")
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.red)
+                    Text(error.localizedDescription)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 15) {
+                        // MARK: - 1) Banner + Title
+
+                        GeometryReader { proxy -> AnyView in
+                            let minY = proxy.frame(in: .global).minY
+
+                            return AnyView(
+                                ZStack {
+                                    // 背景 Banner
+                                    Image("SC_banner")
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
+                                        .frame(
+                                            width: getRect().width,
+                                            height: minY > 0 ? 180 + minY : 180
+                                        )
+                                        .cornerRadius(0)
+                                        .offset(y: minY > 0 ? -minY : 0)
+
+                                    // Blur
+                                    BlurView()
+                                        .opacity(blurViewOpacity())
+
+                                    // Title
+                                    VStack(spacing: 5) {
+                                        Text(viewModel.user.name)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                        Text("\(viewModel.user.followers.count) Followers")
+                                            .foregroundColor(.white)
+                                    }
+                                    .offset(y: 120)
+                                    .offset(y: titleOffset > 100 ? 0 : -getTitleTextOffset())
+                                    .opacity(titleOffset < 100 ? 1 : 0)
                                 }
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 75, height: 75)
-                                .clipShape(Circle())
-                                .padding(8)
-                                .background(colorScheme == .dark ? Color.black : Color.white)
-                                .clipShape(Circle())
-                                .offset(y: offset < 0 ? getOffset() - 20 : -20)
-                                .scaleEffect(getScale())
-                                .id(viewModel.shouldRefreshImage)
+                                .clipped()
+                                .frame(height: minY > 0 ? 180 + minY : nil)
+                                .offset(y: minY > 0 ? -minY : -minY < 80 ? 0 : -minY - 80)
+                                .onAppear {
+                                    DispatchQueue.main.async {
+                                        offset = minY
+                                    }
+                                }
+                            )
                         }
 
-                        Spacer()
+                        .frame(height: 180)
+                        .zIndex(1)
 
-                        // "Edit Profile" 按钮示例
-                        Button {
-                            showEditProfile = true
-                        } label: {
-                            Text("Edit Profile")
-                                .foregroundColor(.blue)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .background(
-                                    Capsule()
-                                        .stroke(Color.blue, lineWidth: 1.5)
-                                )
-                        }
-                    }
-                    .padding(.top, -25)
-                    .padding(.bottom, -10)
+                        // MARK: - 2) Profile Image + Profile Info
 
-                    // 用户文本资料
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(viewModel.user.name)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Profile Image
+                            HStack {
+                                KFImage(viewModel.getAvatarURL())
+                                    .placeholder {
+                                        Image("blankpp")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    }
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 75, height: 75)
+                                    .clipShape(Circle())
+                                    .padding(8)
+                                    .background(.white)
+                                    .clipShape(Circle())
+                                    .offset(y: -20)
 
-                            Text("@\(viewModel.user.username)")
-                                .foregroundColor(.gray)
+                                Spacer()
 
-                            Text(viewModel.user.bio ?? "No bio available")
+                                // 只有当是当前用户时才显示编辑按钮
+                                if viewModel.isCurrentUser {
+                                    Button {
+                                        showEditProfile.toggle()
+                                    } label: {
+                                        Text("Edit Profile")
+                                            .font(.system(size: 14))
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.black)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .stroke(Color.gray, lineWidth: 1)
+                                            )
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
 
-                            HStack(spacing: 5) {
-                                Text("\(viewModel.user.following.count)")
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                Text("Following")
-                                    .foregroundColor(.gray)
+                            // User Info
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(viewModel.user.name)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
 
-                                Text("\(viewModel.user.followers.count)")
-                                    .foregroundColor(.primary)
-                                    .fontWeight(.semibold)
-                                    .padding(.leading, 10)
-                                Text("Followers")
+                                Text("@\(viewModel.user.username)")
+                                    .font(.subheadline)
                                     .foregroundColor(.gray)
                             }
-                            .padding(.top, 8)
-                        }
-                        .padding(.leading, 8)
+                            .padding(.horizontal)
 
-                        Spacer()
-                    }
-                    .overlay(
-                        GeometryReader { proxy in
-                            Color.clear
-                                .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
-                        }
-                        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                            self.titleOffset = value
-                        }
-                    )
-
-                    // MARK: - 3) TabBar (自定义滚动菜单)
-
-                    VStack(spacing: 0) {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 0) {
-                                TabButton(title: "Tweets", currentTab: $currentTab)
-                                TabButton(title: "Replies", currentTab: $currentTab)
-                                TabButton(title: "Media", currentTab: $currentTab)
-                                TabButton(title: "Likes", currentTab: $currentTab)
+                            // User Bio & Details
+                            if let bio = viewModel.user.bio, !bio.isEmpty {
+                                Text(bio)
+                                    .font(.subheadline)
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 4)
                             }
-                        }
-                        Divider()
-                    }
-                    .padding(.top, 16)
-                    .background(colorScheme == .dark ? Color.black : Color.white)
-                    .offset(y: tabBarOffset < 90 ? -tabBarOffset + 90 : 0)
-                    .overlay(
-                        GeometryReader { proxy in
-                            Color.clear
-                                .preference(key: TabBarOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
-                        }
-                        .onPreferenceChange(TabBarOffsetPreferenceKey.self) { value in
-                            self.tabBarOffset = value
-                        }
-                    )
-                    .zIndex(1)
 
-                    // MARK: - 4) Tweets 列表
+                            // Location & Website
+                            HStack(spacing: 24) {
+                                if let location = viewModel.user.location, !location.isEmpty {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "mappin.circle.fill")
+                                        Text(location)
+                                    }
+                                }
 
-                    VStack(spacing: 18) {
-                        ForEach(0 ..< 10, id: \.self) { _ in
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(height: 100)
-                                .padding(.horizontal)
+                                if let website = viewModel.user.website, !website.isEmpty {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "link")
+                                        Text(website)
+                                    }
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+
+                            // Followers Count
+                            HStack(spacing: 24) {
+                                HStack(spacing: 4) {
+                                    Text("\(viewModel.user.following.count)")
+                                        .fontWeight(.bold)
+                                    Text("Following")
+                                        .foregroundColor(.gray)
+                                }
+
+                                HStack(spacing: 4) {
+                                    Text("\(viewModel.user.followers.count)")
+                                        .fontWeight(.bold)
+                                    Text("Followers")
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .font(.subheadline)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal)
+                        }
+
+                        // MARK: - 3) TabBar (自定义滚动菜单)
+
+                        VStack(spacing: 0) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 0) {
+                                    TabButton(title: "Tweets", currentTab: $currentTab)
+                                    TabButton(title: "Replies", currentTab: $currentTab)
+                                    TabButton(title: "Media", currentTab: $currentTab)
+                                    TabButton(title: "Likes", currentTab: $currentTab)
+                                }
+                            }
                             Divider()
                         }
+                        .padding(.top, 16)
+                        .background(colorScheme == .dark ? Color.black : Color.white)
+                        .offset(y: tabBarOffset < 90 ? -tabBarOffset + 90 : 0)
+                        .overlay(
+                            GeometryReader { proxy in
+                                Color.clear
+                                    .preference(key: TabBarOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
+                            }
+                            .onPreferenceChange(TabBarOffsetPreferenceKey.self) { value in
+                                self.tabBarOffset = value
+                            }
+                        )
+                        .zIndex(1)
+
+                        // MARK: - 4) Tweets 列表
+
+                        VStack(spacing: 18) {
+                            ForEach(viewModel.tweets) { tweet in
+                                TweetCellView(viewModel: viewModel.getTweetCellViewModel(for: tweet))
+                                Divider()
+                            }
+                        }
+                        .padding(.top)
+                        .zIndex(0)
                     }
-                    .padding(.top)
-                    .zIndex(0)
                 }
-                .padding(.horizontal)
-                .zIndex(-offset > 80 ? 0 : 1)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -232,7 +269,9 @@ struct ProfileView: View {
         .enableInjection()
         // 添加 sheet 导航
         .sheet(isPresented: $showEditProfile) {
-            EditProfileView()
+            if viewModel.isCurrentUser {
+                EditProfileView()
+            }
         }
     }
 

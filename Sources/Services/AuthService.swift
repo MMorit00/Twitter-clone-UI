@@ -271,4 +271,42 @@ public class AuthService {
 //        }
 //    }
     // }
+
+    static func fetchUserById(
+        userId: String,
+        token: String,
+        completion: @escaping (Result<User, AuthenticationError>) -> Void
+    ) {
+        // 构建URL
+        let urlString = "http://localhost:3000/users/\(userId)"
+        guard let url = URL(string: urlString) else {
+            completion(.failure(.custom("Invalid URL")))
+            return
+        }
+
+        // 创建请求
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        // 发送请求
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error = error {
+                completion(.failure(.custom(error.localizedDescription)))
+                return
+            }
+
+            guard let data = data else {
+                completion(.failure(.custom("No data received")))
+                return
+            }
+
+            do {
+                let user = try JSONDecoder().decode(User.self, from: data)
+                completion(.success(user))
+            } catch {
+                completion(.failure(.custom("Failed to decode user data")))
+            }
+        }.resume()
+    }
 }

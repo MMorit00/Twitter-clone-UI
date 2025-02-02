@@ -14,18 +14,14 @@ struct DemoApp: App {
 //            .injectableView()
         }
     }
-  
-  
 }
-
-
 
 struct ContentView: View {
     @EnvironmentObject var viewModel: AuthViewModel
 
     var body: some View {
         if viewModel.isAuthenticated {
-          if viewModel.user != nil {
+            if viewModel.user != nil {
                 MainView()
                     .injectableView()
             }
@@ -36,9 +32,6 @@ struct ContentView: View {
     }
 }
 
-
-
-
 #Preview {
     ContentView()
 }
@@ -48,8 +41,6 @@ final class InjectionManager: ObservableObject {
     @ObserveInjection var inject
     static let shared = InjectionManager()
 }
-
-
 
 // 简化的视图修饰符
 extension View {
@@ -65,4 +56,3 @@ struct InjectableViewModifier: ViewModifier {
         content.enableInjection()
     }
 }
-

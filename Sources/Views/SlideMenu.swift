@@ -1,11 +1,10 @@
+import Kingfisher
 import SwiftUI
 
 struct SlideMenu: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @StateObject private var viewModel = ProfileViewModel()
-    // @Binding var selectedUser: User?
-    // let user: User // 改为普通属性而不是 Binding
-    var onProfileTap: () -> Void // 重命名回调更清晰
+    var onProfileTap: () -> Void
     @State private var isExpanded = false
     @ObserveInjection var inject
 
@@ -18,16 +17,23 @@ struct SlideMenu: View {
                         onProfileTap() // 触发导航回调
                     } label: {
                         HStack {
-                            Circle()
-                                .fill(.gray)
+                            KFImage(viewModel.getAvatarURL())
+                                .placeholder {
+                                    Circle()
+                                        .fill(.gray)
+                                        .frame(width: 44, height: 44)
+                                }
+                                .resizable()
+                                .scaledToFill()
                                 .frame(width: 44, height: 44)
+                                .clipShape(Circle())
                                 .padding(.bottom, 12)
 
                             VStack(alignment: .leading, spacing: 0) {
-                              Text(viewModel.user.name )
+                                Text(viewModel.user.name)
                                     .font(.system(size: 14))
                                     .padding(.bottom, 4)
-                              Text("@\(viewModel.user.username )")
+                                Text("@\(viewModel.user.username)")
                                     .font(.system(size: 12))
                                     .bold()
                                     .foregroundColor(.gray)
@@ -35,16 +41,6 @@ struct SlideMenu: View {
                         }
                     }
                     .contentShape(Rectangle())
-
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(viewModel.user.name)
-                            .font(.system(size: 14))
-                            .padding(.bottom, 4)
-                        Text("@\(viewModel.user.username)")
-                            .font(.system(size: 12))
-                            .bold()
-                            .foregroundColor(.gray)
-                    }
                 }
                 Spacer()
 
@@ -59,7 +55,7 @@ struct SlideMenu: View {
 
             // 关注信息区域
             HStack(spacing: 0) {
-              Text("\(viewModel.user.following.count) ")
+                Text("\(viewModel.user.following.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Following")
@@ -67,7 +63,7 @@ struct SlideMenu: View {
                     .font(.system(size: 14))
                     .bold()
                     .padding(.trailing, 8)
-              Text("\(viewModel.user.followers.count) ")
+                Text("\(viewModel.user.followers.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Followers")

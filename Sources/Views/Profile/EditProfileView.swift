@@ -260,8 +260,7 @@ struct EditProfileView: View {
         }
         .onReceive(viewModel.$uploadComplete) { complete in
             if complete {
-                // 更新 AuthViewModel 的用户数据
-                authViewModel.updateUser(viewModel.user)
+           
                 // 确保在主线程中关闭视图
                 DispatchQueue.main.async {
                     mode.wrappedValue.dismiss()

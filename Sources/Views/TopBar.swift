@@ -1,3 +1,4 @@
+import Kingfisher
 import SwiftUI
 
 struct TopBar: View {
@@ -5,14 +6,28 @@ struct TopBar: View {
     @ObserveInjection var inject
     @Binding var showMenu: Bool
     @Binding var offset: CGFloat
-    
+    @EnvironmentObject private var authViewModel: AuthViewModel
+
+    // 获取用户头像URL
+    private var avatarURL: URL? {
+        guard let userId = authViewModel.user?.id else { return nil }
+        return URL(string: "http://localhost:3000/users/\(userId)/avatar")
+    }
 
     var body: some View {
         VStack {
             HStack {
-                Circle()
-                    .fill(Color.gray)
+                // 替换Circle为KFImage
+                KFImage(avatarURL)
+                    .placeholder {
+                        Image("blankpp") // 使用默认头像作为占位图
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                    .resizable()
+                    .scaledToFill()
                     .frame(width: 35, height: 35)
+                    .clipShape(Circle())
                     .opacity(1.0 - (offset / (UIScreen.main.bounds.width - 90)))
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -24,6 +39,7 @@ struct TopBar: View {
                             }
                         }
                     }
+
                 Spacer()
 
                 Image(systemName: "ellipsis")
@@ -31,9 +47,7 @@ struct TopBar: View {
                     .foregroundColor(.black)
             }
             .overlay(
-              
                 Image("X")
-                
                     .resizable()
                     .scaledToFill()
                     .frame(width: 25, height: 25),

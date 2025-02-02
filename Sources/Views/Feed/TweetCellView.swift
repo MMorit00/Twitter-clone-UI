@@ -1,5 +1,6 @@
-import SwiftUI
 import Kingfisher
+import SwiftUI
+
 struct TweetCellView: View {
     @ObserveInjection var inject
     @ObservedObject var viewModel: TweetCellViewModel
@@ -20,12 +21,28 @@ struct TweetCellView: View {
 
             // 主要内容
             HStack(alignment: .top, spacing: 12) {
-                // 头像 - 暂时使用默认头像
-//                NavigationLink(destination: ProfileView(user: viewModel.tweet.user)) {
-                    Circle()
-                        .fill(.gray)
-                        .frame(width: 44, height: 44)
-//                }
+                // 头像部分
+                NavigationLink {
+                    if let user = viewModel.user {
+                        ProfileView(userId: user.id)
+                    }
+                } label: {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(width: 44, height: 44)
+                    } else {
+                        KFImage(viewModel.getUserAvatarURL())
+                            .placeholder {
+                                Circle()
+                                    .fill(.gray)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 44, height: 44)
+                            .clipShape(Circle())
+                    }
+                }
 
                 // 推文内容
                 VStack(alignment: .leading, spacing: 4) {
