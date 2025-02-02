@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct Tweet: Identifiable, Decodable {
+struct Tweet: Identifiable, Decodable,Equatable {
     // MongoDB的_id字段
     let _id: String
     let text: String

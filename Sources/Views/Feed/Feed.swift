@@ -3,8 +3,7 @@ import SwiftUI
 struct FeedView: View {
     // 添加热重载支持
     @ObserveInjection var inject
-    // 添加用户属性
-    let user: User
+    @EnvironmentObject private var authViewModel: AuthViewModel
     // 添加 ViewModel
     @StateObject var viewModel = FeedViewModel()
 
@@ -20,6 +19,9 @@ struct FeedView: View {
                         .padding()
                 }
             }
+        }
+        .refreshable { // 添加下拉刷新
+            viewModel.refresh()
         }
         .enableInjection()
     }

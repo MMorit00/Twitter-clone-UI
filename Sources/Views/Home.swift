@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct HomeView: View {
-  let user: User
+    @EnvironmentObject private var viewModel: AuthViewModel
     @ObserveInjection var inject
     @State private var selectedTab = 0
-    @State private var showCreateTweetView = false 
+    @State private var showCreateTweetView = false
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
-                FeedView(user: user)
+                FeedView()
                     .tabItem {
                         Image(systemName: "house")
                         Text("Home")
@@ -43,7 +43,7 @@ struct HomeView: View {
 
             // 添加浮动发推按钮
             Button(action: {
-                showCreateTweetView = true 
+                showCreateTweetView = true
             }) {
                 Image(systemName: "plus")
                     .font(.title)
@@ -56,8 +56,7 @@ struct HomeView: View {
             .padding()
             .padding(.bottom, 60) // 调整按钮位置，避免与 TabBar 重叠
         }
-       
+
         .enableInjection()
     }
 }
-

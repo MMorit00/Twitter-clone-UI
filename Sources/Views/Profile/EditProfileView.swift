@@ -4,9 +4,11 @@ import SwiftUI
 struct EditProfileView: View {
     @Environment(\.presentationMode) var mode
     @ObserveInjection var inject
+    @EnvironmentObject private var authViewModel: AuthViewModel
 
-    // 绑定用户数据
-    @Binding var user: User
+    // 移除 user binding
+    // @Binding var user: User
+    @StateObject private var viewModel: EditProfileViewModel
 
     // 用户输入的状态变量
     @State private var name: String = ""
@@ -29,15 +31,16 @@ struct EditProfileView: View {
         case profile
     }
 
-    // 添加初始化方法
-    init(user: Binding<User>) {
-        _user = user
-
+    // 修改初始化方法
+    init() {
+        // 使用AuthViewModel.shared.user初始化
+        let user = AuthViewModel.shared.user!
+        _viewModel = StateObject(wrappedValue: EditProfileViewModel(user: user))
         // 初始化各个字段
-        _name = State(initialValue: user.wrappedValue.name)
-        _location = State(initialValue: user.wrappedValue.location ?? "")
-        _bio = State(initialValue: user.wrappedValue.bio ?? "")
-        _website = State(initialValue: user.wrappedValue.website ?? "")
+        _name = State(initialValue: user.name)
+        _location = State(initialValue: user.location ?? "")
+        _bio = State(initialValue: user.bio ?? "")
+        _website = State(initialValue: user.website ?? "")
     }
 
     var body: some View {
@@ -208,11 +211,18 @@ struct EditProfileView: View {
                         mode.wrappedValue.dismiss()
                     }
                     Spacer()
-                    Button("Save") {
-                        // 保存逻辑
-                        mode.wrappedValue.dismiss()
+                    Button(action: {
+                        viewModel.save(
+                            name: name,
+                            bio: bio,
+                            website: website,
+                            location: location
+                        )
+                    }) {
+                        Text("Save")
+                            .bold()
+                            .disabled(viewModel.isSaving)
                     }
-                    .bold()
                 }
                 .padding()
                 .background(Material.ultraThin)
@@ -232,10 +242,15 @@ struct EditProfileView: View {
 
                         switch imagePickerType {
                         case .profile:
-                            profileImage = image
+                            viewModel.profileImage = image // 更新 ViewModel
+                            profileImage = image // 更新 View 状态
                         case .banner:
-                            bannerImage = image
+                            viewModel.bannerImage = image // 更新 ViewModel
+                            bannerImage = image // 更新 View 状态
                         }
+
+                        // 清除选中的图片
+                        selectedImage = nil
                     }
             }
         }
@@ -243,6 +258,17 @@ struct EditProfileView: View {
             // 清除 Kingfisher 缓存
             KingfisherManager.shared.cache.clearCache()
         }
+        .onReceive(viewModel.$uploadComplete) { complete in
+            if complete {
+                // 更新 AuthViewModel 的用户数据
+                authViewModel.updateUser(viewModel.user)
+                // 确保在主线程中关闭视图
+                DispatchQueue.main.async {
+                    mode.wrappedValue.dismiss()
+                }
+            }
+        }
+
         .enableInjection()
     }
 }

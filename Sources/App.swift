@@ -25,8 +25,8 @@ struct ContentView: View {
 
     var body: some View {
         if viewModel.isAuthenticated {
-            if let user = viewModel.user {
-                MainView(user: user)
+          if viewModel.user != nil {
+                MainView()
                     .injectableView()
             }
         } else {

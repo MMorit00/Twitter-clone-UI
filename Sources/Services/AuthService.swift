@@ -1,4 +1,5 @@
 import Foundation
+
 //! authService 与 requestService 的差异在于 requestService 返回的是 json 数据，而 authService 返回的是 APIResponse 数据
 public class AuthService {
     // 静态域名变量
@@ -245,4 +246,29 @@ public class AuthService {
         // 5. 开始任务
         task.resume()
     }
+
+    // static func makePatchRequestWithAuth(
+//    urlString: String,
+//    requestBody: [String: Any],
+//    token: String,
+//    completion: @escaping (Result<Data, NetworkError>) -> Void
+    // ) {
+//    // 使用 Task 在后台调用 async 版本
+//    Task {
+//        do {
+//            let data = try await makePatchRequestWithAuth(
+//                urlString: urlString,
+//                requestBody: requestBody,
+//                token: token
+//            )
+//            completion(.success(data))
+//        } catch {
+//            if let networkError = error as? NetworkError {
+//                completion(.failure(networkError))
+//            } else {
+//                completion(.failure(.noData))
+//            }
+//        }
+//    }
+    // }
 }

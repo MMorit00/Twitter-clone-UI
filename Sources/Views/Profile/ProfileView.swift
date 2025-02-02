@@ -1,5 +1,5 @@
-import SwiftUI
 import Kingfisher
+import SwiftUI
 
 // 添加在文件顶部
 struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -20,21 +20,16 @@ struct TabBarOffsetPreferenceKey: PreferenceKey {
 struct ProfileView: View {
     // MARK: - Properties
 
-    @StateObject var viewModel: ProfileViewModel
+    @StateObject private var viewModel = ProfileViewModel()
     @ObserveInjection var inject
     @State var offset: CGFloat = 0 // 监测最顶端 Banner 的滚动偏移
     @State var titleOffset: CGFloat = 0 // 监测 Profile Data 或标题区域的滚动偏移
     @State var tabBarOffset: CGFloat = 0 // 监测 TabBar 的滚动偏移
     @State private var showEditProfile = false // 添加导航状态
-
+    @EnvironmentObject private var authViewModel: AuthViewModel
     @State var currentTab = "Tweets"
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) private var dismiss
-
-    // 添加初始化方法
-    init(user: User) {
-        _viewModel = StateObject(wrappedValue: ProfileViewModel(user: user))
-    }
 
     // MARK: - Body
 
@@ -48,11 +43,8 @@ struct ProfileView: View {
 
                     ZStack {
                         // 背景 Banner
-                        KFImage(URL(string: viewModel.user.bannerURL ?? ""))
-                            .placeholder {
-                                Rectangle()
-                                    .fill(Color(.systemGray6))
-                            }
+                        Image("SC_banner")
+
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(
@@ -94,11 +86,11 @@ struct ProfileView: View {
                     HStack {
                         // 头像
                         ZStack {
-                            KFImage(URL(string: viewModel.user.avatarURL ?? ""))
+                            KFImage(viewModel.getAvatarURL())
                                 .placeholder {
-                                    Image(systemName: "person.circle.fill")
+                                    Image("blankpp")
                                         .resizable()
-                                        .foregroundColor(Color(.systemGray4))
+                                        .aspectRatio(contentMode: .fill)
                                 }
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -109,6 +101,7 @@ struct ProfileView: View {
                                 .clipShape(Circle())
                                 .offset(y: offset < 0 ? getOffset() - 20 : -20)
                                 .scaleEffect(getScale())
+                                .id(viewModel.shouldRefreshImage)
                         }
 
                         Spacer()
@@ -239,7 +232,7 @@ struct ProfileView: View {
         .enableInjection()
         // 添加 sheet 导航
         .sheet(isPresented: $showEditProfile) {
-            EditProfileView(user: $viewModel.user)
+            EditProfileView()
         }
     }
 
