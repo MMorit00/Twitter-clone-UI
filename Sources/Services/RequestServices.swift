@@ -30,7 +30,10 @@ enum NetworkError: LocalizedError {
         }
     }
 }
-
+// 添加点赞响应模型
+struct ErrorResponse: Codable {
+    let message: String
+}
 
 public class RequestServices {
     // 修改 requestDomain 的默认值和访问级别

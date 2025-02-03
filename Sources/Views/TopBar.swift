@@ -6,14 +6,16 @@ struct TopBar: View {
     @ObserveInjection var inject
     @Binding var showMenu: Bool
     @Binding var offset: CGFloat
+    @Binding var selectedTab: Int // 添加这行
     @EnvironmentObject private var authViewModel: AuthViewModel
-
-    // 获取用户头像URL
+  @Binding var searchText: String
+  @Binding var isSearching: Bool
     private var avatarURL: URL? {
-        guard let userId = authViewModel.user?.id else { return nil }
-        return URL(string: "http://localhost:3000/users/\(userId)/avatar")
-    }
-
+        guard let user = authViewModel.user else {
+            return nil
+        }
+        return URL(string: "http://localhost:3000/users/\(user.id)/avatar")
+    } 
     var body: some View {
         VStack {
             HStack {
@@ -47,10 +49,26 @@ struct TopBar: View {
                     .foregroundColor(.black)
             }
             .overlay(
-                Image("X")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 25, height: 25),
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        Image("X")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 25, height: 25)
+                    case 1:
+                        SearchBar(text: $searchText, isEditing: $isSearching)
+                            .frame(width: width * 0.7)
+                    case 2:
+                        Text("Notifications")
+                            .font(.headline)
+                    case 3:
+                        Text("Messages")
+                            .font(.headline)
+                    default:
+                        EmptyView()
+                    }
+                },
                 alignment: .center
             )
             .padding(.top, 6)

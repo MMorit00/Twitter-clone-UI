@@ -3,8 +3,11 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var viewModel: AuthViewModel
     @ObserveInjection var inject
-    @State private var selectedTab = 0
+    @Binding var selectedTab: Int
     @State private var showCreateTweetView = false
+  @Binding var searchText:String
+  @Binding  var isSearching:Bool
+    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
@@ -15,13 +18,13 @@ struct HomeView: View {
                     }
                     .tag(0)
 
-                SearchView()
+                SearchView(searchText: $searchText, isEditing: $isSearching)
                     .tabItem {
                         Image(systemName: "magnifyingglass")
                         Text("Search")
                     }
                     .tag(1)
-
+                
                 NotificationsView()
                     .tabItem {
                         Image(systemName: "bell")

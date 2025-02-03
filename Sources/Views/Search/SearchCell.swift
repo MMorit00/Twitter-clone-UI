@@ -1,30 +1,29 @@
 
-import SwiftUI 
+import SwiftUI
+import Kingfisher
 
-
-struct SearchCell: View {
+struct SearchUserCell: View {
+    
+    let user: User
+    
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Trending")
-                .foregroundColor(.gray)
-                .font(.system(size: 14))
+        HStack {
+            KFImage(URL(string: "http://localhost:3000/users/\(self.user.id)/avatar"))
+                .resizable()
+                .scaledToFit()
+                .frame(width: 44, height: 44)
+                .clipShape(Circle())
+            VStack(alignment: .leading) {
+                Text(user.name)
+                    .fontWeight(.heavy)
+                    .foregroundColor(.black)
+                Text(user.username)
+                    .foregroundColor(.black)
+                
+            }
             
-            Text("SwiftUI")
-                .fontWeight(.heavy)
-                .padding(.vertical, 2)
-            
-            Text("10.5K Tweets")
-                .foregroundColor(.gray)
-                .font(.system(size: 14))
-        }
-        .padding(.vertical, 8)
-        // 添加点击效果
-        .contentShape(Rectangle())
-        .onTapGesture {
-            // 处理点击事件
-            print("Trend topic tapped")
+            Spacer(minLength: 0)
         }
     }
-
-    
 }
+

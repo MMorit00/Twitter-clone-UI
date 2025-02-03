@@ -195,7 +195,60 @@ public class AuthService {
 
         task.resume()
     }
+  static func fetchUsers(completion: @escaping (_ result: Result<Data?, AuthenticationError>) -> Void) {
+        
+        let urlString = URL(string: "http://localhost:3000/users")!
+        
+        let urlRequest = URLRequest(url: urlString)
+        
+        let url = URL(string: requestDomain)!
+        
+        let session = URLSession.shared
+        
+        var request = URLRequest(url: url)
+            
+        request.httpMethod = "GET"
+        
+//        do {
+//            request.httpBody = try JSONSerialization.data(withJSONObject: reqBody, options: .prettyPrinted)
+//        }
+//        catch let error {
+//            print(error)
+//        }
+        
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
 
+        let task = session.dataTask(with: request) { data, res, err in
+            guard err == nil else {
+                
+                return
+                
+            }
+            
+            guard let data = data else {
+                completion(.failure(.invalidCredentials))
+                return
+                
+            }
+            
+            completion(.success(data))
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
+                    
+                    
+                }
+                
+            }
+            catch let error {
+                completion(.failure(.invalidCredentials))
+                print(error)
+            }
+        }
+        
+        task.resume()
+    }
     // 添加 PATCH 请求方法
     static func makePatchRequestWithAuth(
         urlString: String,

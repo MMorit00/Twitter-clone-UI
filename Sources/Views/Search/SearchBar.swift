@@ -21,6 +21,8 @@ struct SearchBar: View {
                                     .foregroundColor(.black)
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                     .padding(.leading, 10)
+                                    .opacity(text.isEmpty ? 1 : 0)
+                                    .animation(nil, value: text.isEmpty)
                             }
                         )
                         .onTapGesture {

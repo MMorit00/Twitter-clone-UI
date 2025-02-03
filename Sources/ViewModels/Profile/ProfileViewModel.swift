@@ -154,71 +154,62 @@ class ProfileViewModel: ObservableObject {
         isFollowing = isFollowed
     }
 
-    // 修改 follow 方法：本地更新，不再重拉整个用户数据
-    func follow() {
+  func follow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
-
         RequestServices.followingProcess(userId: user.id, isFollowing: false) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case let .success(response):
                     if response.message.contains("已经关注") {
-                        // 如果接口提示已经关注，确保UI状态正确
                         self?.user.isFollowed = true
                         self?.isFollowing = true
                     } else {
-                        // 正常关注成功,更新本地状态
-                        self?.user.followers.append(currentUser.id)
-                        self?.user.isFollowed = true
+                        // 修改本地目标用户数据：整体更新 followers
+                        var updatedUser = self?.user ?? User(username: "", name: "", email: "")
+                        updatedUser.followers.append(currentUser.id)
+                        updatedUser.isFollowed = true
+                        self?.user = updatedUser
                         self?.isFollowing = true
                     }
                     
-                    // -------- 关键改动 --------
-                    // 只有当“要关注的这个用户”就是当前用户自己时，才在全局里更新 following
-                    // （一般来说，这种场景不多见。但如果你确实需要“我自己”关注“我自己”，可以酌情改动）
-                    //
-                    // 如果你想让全局的 AuthViewModel 记录下「当前用户关注了谁」信息，可以这样：
+                    // 同时更新全局当前登录用户（如果本次操作涉及更新我的 following 数组）
                     if currentUser.id == AuthViewModel.shared.user?.id {
-                        // 说明我在查看我的Profile，不用动
-                        // 或者：AuthViewModel.shared.user?.followers = self?.user.followers ?? []
-                    } else {
-                        // 如果是“我”去关注其他人，需要局部更新 AuthViewModel.shared.user 的 following
-                        // 注意这样也会触发较大范围刷新，必要时可以省略
-                        AuthViewModel.shared.user?.following.append(self?.user.id ?? "")
+                        var globalUser = AuthViewModel.shared.user!
+                        // 若全局 following 中尚未包含目标用户 ID，则追加
+                        if !globalUser.following.contains(self?.user.id ?? "") {
+                            globalUser.following.append(self?.user.id ?? "")
+                        }
+                        // 重新整体赋值全局对象，触发更新
+                        AuthViewModel.shared.user = globalUser
                     }
-                    // -------------------------
-                    
                     print("Follow response: \(response.message)")
-
                 case let .failure(error):
                     print("Follow error: \(error.localizedDescription)")
                 }
             }
         }
     }
-
-    // 修改 unfollow 方法：本地更新，不再重拉用户数据
+    
     func unfollow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
-
         RequestServices.followingProcess(userId: user.id, isFollowing: true) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case let .success(response):
-                    // 1. 更新目标用户的 followers
-                    self?.user.followers.removeAll(where: { $0 == currentUser.id })
-                    self?.user.isFollowed = false
+                    // 修改本地目标用户数据：整体更新 followers
+                    var updatedUser = self?.user ?? User(username: "", name: "", email: "")
+                    updatedUser.followers.removeAll(where: { $0 == currentUser.id })
+                    updatedUser.isFollowed = false
+                    self?.user = updatedUser
                     self?.isFollowing = false
-
-                    // 2. 如果要同步修改全局当前用户的 following，也只做局部操作
+                    
+                    // 同步更新全局当前登录用户的 following 列表
                     if currentUser.id == AuthViewModel.shared.user?.id {
-                        // 说明我在操作自己，不用动
-                    } else {
-                        AuthViewModel.shared.user?.following.removeAll(where: { $0 == self?.user.id })
+                        var globalUser = AuthViewModel.shared.user!
+                        globalUser.following.removeAll(where: { $0 == self?.user.id })
+                        AuthViewModel.shared.user = globalUser
                     }
-
                     print("Unfollow success: \(response.message)")
-
                 case let .failure(error):
                     print("Unfollow error: \(error.localizedDescription)")
                 }

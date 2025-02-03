@@ -3,11 +3,16 @@ import SwiftUI
 
 struct SlideMenu: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
-    @StateObject private var viewModel = ProfileViewModel()
+   
     var onProfileTap: () -> Void
     @State private var isExpanded = false
     @ObserveInjection var inject
-
+   private var avatarURL: URL? {
+        guard let user = authViewModel.user else {
+            return nil
+        }
+        return URL(string: "http://localhost:3000/users/\(user.id)/avatar")
+    } 
     var body: some View {
         VStack(alignment: .leading) {
             // 顶部用户信息区域
@@ -17,7 +22,7 @@ struct SlideMenu: View {
                         onProfileTap() // 触发导航回调
                     } label: {
                         HStack {
-                            KFImage(viewModel.getAvatarURL())
+                            KFImage(avatarURL)
                                 .placeholder {
                                     Circle()
                                         .fill(.gray)
@@ -30,10 +35,10 @@ struct SlideMenu: View {
                                 .padding(.bottom, 12)
 
                             VStack(alignment: .leading, spacing: 0) {
-                                Text(viewModel.user.name)
+                              Text(authViewModel.user!.name)
                                     .font(.system(size: 14))
                                     .padding(.bottom, 4)
-                                Text("@\(viewModel.user.username)")
+                                Text("@\(authViewModel.user!.username)")
                                     .font(.system(size: 12))
                                     .bold()
                                     .foregroundColor(.gray)
@@ -55,7 +60,7 @@ struct SlideMenu: View {
 
             // 关注信息区域
             HStack(spacing: 0) {
-                Text("\(viewModel.user.following.count) ")
+                Text("\(authViewModel.user!.following.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Following")
@@ -63,7 +68,7 @@ struct SlideMenu: View {
                     .font(.system(size: 14))
                     .bold()
                     .padding(.trailing, 8)
-                Text("\(viewModel.user.followers.count) ")
+                Text("\(authViewModel.user!.followers.count) ")
                     .font(.system(size: 14))
                     .bold()
                 Text("Followers")
