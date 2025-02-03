@@ -52,7 +52,7 @@ public class RequestServices {
         request.httpMethod = "POST"
 
         // 添加认证token
-        guard let token = UserDefaults.standard.string(forKey: "JSON_WEB_TOKEN") else { return }
+        guard let token = UserDefaults.standard.string(forKey: "jwt") else { return }
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 
         // 设置JSON请求头

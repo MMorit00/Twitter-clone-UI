@@ -20,7 +20,7 @@ struct ContentView: View {
     @EnvironmentObject var viewModel: AuthViewModel
 
     var body: some View {
-        if viewModel.isAuthenticated {
+        if viewModel.isAuthenticated  {
             if viewModel.user != nil {
                 MainView()
                     .injectableView()

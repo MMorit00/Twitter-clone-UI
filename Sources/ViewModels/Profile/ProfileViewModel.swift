@@ -15,24 +15,26 @@ class ProfileViewModel: ObservableObject {
     private var userId: String?
 
     var isCurrentUser: Bool {
+        // 如果 userId 为空或者等于当前用户ID，则说明是查看自己
         userId == nil || userId == AuthViewModel.shared.user?.id
     }
 
     init(userId: String? = nil) {
         self.userId = userId
 
-        // 初始化一个空的用户对象
+        // 先给 user 赋一个当前用户或空 user 的初始值
         if let currentUser = AuthViewModel.shared.user {
             user = currentUser
         } else {
             user = User(username: "", name: "", email: "")
         }
 
-        // 如果是查看其他用户的profile
-        if let userId = userId, userId != AuthViewModel.shared.user?.id {
+        // 如果是查看其他用户的profile，就调用 fetchUserData
+        if let userId = userId,
+           userId != AuthViewModel.shared.user?.id {
             fetchUserData(userId: userId)
         } else {
-            // 如果是当前用户，监听用户更新
+            // 如果是当前用户，则订阅 AuthViewModel.shared.$user
             AuthViewModel.shared.$user
                 .compactMap { $0 }
                 .receive(on: DispatchQueue.main)
@@ -48,6 +50,7 @@ class ProfileViewModel: ObservableObject {
                 }
                 .store(in: &cancellables)
 
+            // 加载当前用户自己的推文
             fetchTweets()
         }
     }
@@ -86,12 +89,17 @@ class ProfileViewModel: ObservableObject {
         if let existing = tweetViewModels[tweet.id] {
             return existing
         }
-        let viewModel = TweetCellViewModel(tweet: tweet)
+
+        guard let currentUser = AuthViewModel.shared.user else {
+            fatalError("Current user should not be nil when creating TweetCellViewModel")
+        }
+
+        let viewModel = TweetCellViewModel(tweet: tweet, currentUser: currentUser)
         tweetViewModels[tweet.id] = viewModel
         return viewModel
     }
 
-    // 修改 fetchTweets 方法
+    // 加载推文
     func fetchTweets() {
         // 确定要请求的用户ID
         let targetUserId: String
@@ -136,19 +144,17 @@ class ProfileViewModel: ObservableObject {
         tweetViewModels = tweetViewModels.filter { currentIds.contains($0.key) }
     }
 
-    // 修改 checkIfUserIsFollowed 方法
+    // 在 user 里检查是否关注
     func checkIfUserIsFollowed() {
         guard let currentUserId = AuthViewModel.shared.user?.id else { return }
 
-        // 检查是否在 followers 数组中
+        // 检查目标用户的followers数组里是否包含当前用户ID
         let isFollowed = user.followers.contains(currentUserId)
         user.isFollowed = isFollowed
         isFollowing = isFollowed
-
-        print("Checking follow status - isFollowed: \(isFollowed)")
     }
 
-    // 修改 follow 方法
+    // 修改 follow 方法：本地更新，不再重拉整个用户数据
     func follow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
 
@@ -157,21 +163,31 @@ class ProfileViewModel: ObservableObject {
                 switch result {
                 case let .success(response):
                     if response.message.contains("已经关注") {
-                        // 如果已经关注,确保UI状态正确
+                        // 如果接口提示已经关注，确保UI状态正确
                         self?.user.isFollowed = true
                         self?.isFollowing = true
                     } else {
-                        // 关注成功,更新状态
+                        // 正常关注成功,更新本地状态
                         self?.user.followers.append(currentUser.id)
                         self?.user.isFollowed = true
                         self?.isFollowing = true
-
-                        // 更新当前用户的 following
-                        if var currentUser = AuthViewModel.shared.user {
-                            currentUser.following.append(self?.user.id ?? "")
-                            AuthViewModel.shared.updateCurrentUser(currentUser)
-                        }
                     }
+                    
+                    // -------- 关键改动 --------
+                    // 只有当“要关注的这个用户”就是当前用户自己时，才在全局里更新 following
+                    // （一般来说，这种场景不多见。但如果你确实需要“我自己”关注“我自己”，可以酌情改动）
+                    //
+                    // 如果你想让全局的 AuthViewModel 记录下「当前用户关注了谁」信息，可以这样：
+                    if currentUser.id == AuthViewModel.shared.user?.id {
+                        // 说明我在查看我的Profile，不用动
+                        // 或者：AuthViewModel.shared.user?.followers = self?.user.followers ?? []
+                    } else {
+                        // 如果是“我”去关注其他人，需要局部更新 AuthViewModel.shared.user 的 following
+                        // 注意这样也会触发较大范围刷新，必要时可以省略
+                        AuthViewModel.shared.user?.following.append(self?.user.id ?? "")
+                    }
+                    // -------------------------
+                    
                     print("Follow response: \(response.message)")
 
                 case let .failure(error):
@@ -181,7 +197,7 @@ class ProfileViewModel: ObservableObject {
         }
     }
 
-    // 修改 unfollow 方法
+    // 修改 unfollow 方法：本地更新，不再重拉用户数据
     func unfollow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
 
@@ -194,10 +210,11 @@ class ProfileViewModel: ObservableObject {
                     self?.user.isFollowed = false
                     self?.isFollowing = false
 
-                    // 2. 更新当前用户的 following
-                    if var currentUser = AuthViewModel.shared.user {
-                        currentUser.following.removeAll(where: { $0 == self?.user.id })
-                        AuthViewModel.shared.updateCurrentUser(currentUser)
+                    // 2. 如果要同步修改全局当前用户的 following，也只做局部操作
+                    if currentUser.id == AuthViewModel.shared.user?.id {
+                        // 说明我在操作自己，不用动
+                    } else {
+                        AuthViewModel.shared.user?.following.removeAll(where: { $0 == self?.user.id })
                     }
 
                     print("Unfollow success: \(response.message)")
@@ -208,15 +225,4 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
-
-//    func checkIfIsCurrentUser() {
-//        if user._id == AuthViewModel.shared.user?._id {
-//            user.isCurrentUser = true
-//        }
-//    }
-}
-
-// 添加错误响应模型
-struct ErrorResponse: Codable {
-    let message: String
 }
