@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct Tweet: Identifiable, Decodable,Equatable {
+struct Tweet: Identifiable, Decodable, Equatable {
     // MongoDB的_id字段
     let _id: String
     let text: String
@@ -12,6 +12,7 @@ struct Tweet: Identifiable, Decodable,Equatable {
     // 可选字段,后续功能预留
     var image: Bool?
     var likes: [String]?
+    var didLike: Bool? = false // 添加点赞状态标记
 
     // 满足Identifiable协议
     var id: String {

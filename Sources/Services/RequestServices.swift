@@ -1,9 +1,36 @@
-import Foundation
 
+import Foundation
 // 添加响应模型
 struct FollowResponse: Codable {
     let message: String
 }
+
+// 添加点赞响应模型
+struct LikeResponse: Codable {
+    let message: String
+}
+
+// 添加自定义错误类型
+enum NetworkError: LocalizedError {
+    case invalidURL
+    case noData
+    case noToken
+    case custom(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid URL"
+        case .noData:
+            return "No data received"
+        case .noToken:
+            return "No authentication token"
+        case let .custom(message):
+            return message
+        }
+    }
+}
+
 
 public class RequestServices {
     // 修改 requestDomain 的默认值和访问级别
@@ -188,6 +215,74 @@ public class RequestServices {
         task.resume()
     }
 
+    // 修改 likeTweet 方法
+    static func likeTweet(
+        tweetId: String,
+        isLiked: Bool,
+        completion: @escaping (Result<LikeResponse, Error>) -> Void
+    ) {
+        // 构建URL
+        let endpoint = isLiked ? "/unlike" : "/like"
+        let urlString = "http://localhost:3000/tweets/\(tweetId)\(endpoint)"
+
+        print("Request URL: \(urlString)") // 调试日志
+
+        guard let url = URL(string: urlString) else {
+            completion(.failure(NetworkError.invalidURL))
+            return
+        }
+
+        // 创建请求
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+
+        // 添加认证
+        guard let token = UserDefaults.standard.string(forKey: "jwt") else {
+            completion(.failure(NetworkError.noToken))
+            return
+        }
+
+        // 设置请求头
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // 发送请求
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            // 打印 HTTP 响应状态码和原始响应数据（用于调试）
+            if let httpResponse = response as? HTTPURLResponse {
+                print("HTTP Status Code: \(httpResponse.statusCode)")
+            }
+
+            if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                print("Raw response: \(responseString)")
+            }
+
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let data = data else {
+                completion(.failure(NetworkError.noData))
+                return
+            }
+
+            do {
+                let response = try JSONDecoder().decode(LikeResponse.self, from: data)
+                completion(.success(response))
+            } catch {
+                // 尝试解码错误响应
+                if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                    completion(.failure(NetworkError.custom(errorResponse.message)))
+                } else {
+                    completion(.failure(error))
+                }
+            }
+        }
+
+        task.resume()
+    }
+
     // // 发送关注通知的方法
     // public static func sendNotification(
     //     username: String,
@@ -246,12 +341,4 @@ public class RequestServices {
     //         print("Error: \(error.localizedDescription)")
     //     }
     // }
-}
-
-// 定义网络错误类型
-enum NetworkError: Error {
-    case noData
-    case invalidResponse
-    case invalidURL
-    case noToken
 }

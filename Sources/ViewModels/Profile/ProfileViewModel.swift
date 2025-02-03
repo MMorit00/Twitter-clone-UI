@@ -60,7 +60,7 @@ class ProfileViewModel: ObservableObject {
             return
         }
 
-        AuthService.fetchUserById(userId: userId, token: token) { [weak self] result in
+        AuthService.fetchUser(userId: userId, token: token) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case let .success(fetchedUser):

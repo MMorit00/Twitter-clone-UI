@@ -1,6 +1,5 @@
 import Foundation
 
-//! authService 与 requestService 的差异在于 requestService 返回的是 json 数据，而 authService 返回的是 APIResponse 数据
 public class AuthService {
     // 静态域名变量
     public static var requestDomain: String = ""
@@ -247,66 +246,6 @@ public class AuthService {
         task.resume()
     }
 
-    // static func makePatchRequestWithAuth(
-//    urlString: String,
-//    requestBody: [String: Any],
-//    token: String,
-//    completion: @escaping (Result<Data, NetworkError>) -> Void
-    // ) {
-//    // 使用 Task 在后台调用 async 版本
-//    Task {
-//        do {
-//            let data = try await makePatchRequestWithAuth(
-//                urlString: urlString,
-//                requestBody: requestBody,
-//                token: token
-//            )
-//            completion(.success(data))
-//        } catch {
-//            if let networkError = error as? NetworkError {
-//                completion(.failure(networkError))
-//            } else {
-//                completion(.failure(.noData))
-//            }
-//        }
-//    }
-    // }
-
-    static func fetchUserById(
-        userId: String,
-        token: String,
-        completion: @escaping (Result<User, AuthenticationError>) -> Void
-    ) {
-        // 构建URL
-        let urlString = "http://localhost:3000/users/\(userId)"
-        guard let url = URL(string: urlString) else {
-            completion(.failure(.custom("Invalid URL")))
-            return
-        }
-
-        // 创建请求
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        // 发送请求
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            if let error = error {
-                completion(.failure(.custom(error.localizedDescription)))
-                return
-            }
-
-            guard let data = data else {
-                completion(.failure(.custom("No data received")))
-                return
-            }
-
-            do {
-                let user = try JSONDecoder().decode(User.self, from: data)
-                completion(.success(user))
-            } catch {
-                completion(.failure(.custom("Failed to decode user data")))
-            }
-        }.resume()
-    }
+ 
+    
 }

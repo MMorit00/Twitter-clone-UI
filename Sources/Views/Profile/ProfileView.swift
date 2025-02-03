@@ -1,6 +1,3 @@
-import Kingfisher
-import SwiftUI
-
 // 添加在文件顶部
 struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
@@ -17,6 +14,8 @@ struct TabBarOffsetPreferenceKey: PreferenceKey {
     }
 }
 
+import SwiftUI
+import Kingfisher
 struct ProfileView: View {
     // MARK: - Properties
 

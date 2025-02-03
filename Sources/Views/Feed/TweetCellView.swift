@@ -5,6 +5,11 @@ struct TweetCellView: View {
     @ObserveInjection var inject
     @ObservedObject var viewModel: TweetCellViewModel
 
+    // 添加计算属性
+    private var didLike: Bool {
+        viewModel.tweet.didLike ?? false
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // 点赞信息 - 如果有点赞则显示
@@ -81,16 +86,36 @@ struct TweetCellView: View {
 
                     // 互动按钮
                     HStack(spacing: 40) {
-                        InteractionButton(image: "message", count: 0) // TODO: 添加评论功能
-                        InteractionButton(image: "arrow.2.squarepath", count: 0) // TODO: 添加转发功能
-                        InteractionButton(image: "heart", count: viewModel.tweet.likes?.count ?? 0)
+                        InteractionButton(image: "message", count: 0)
+                        InteractionButton(image: "arrow.2.squarepath", count: 0)
+
+                        Button(action: {
+                            viewModel.likeTweet()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: didLike ? "heart.fill" : "heart")
+                                    .foregroundColor(didLike ? .red : .gray)
+                                if let likes = viewModel.tweet.likes {
+                                    Text("\(likes.count)")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                        }
+                        .zIndex(1)
+                        .padding(8)
+                        .contentShape(Rectangle())
+
                         InteractionButton(image: "square.and.arrow.up", count: nil)
                     }
                     .padding(.top, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .contentShape(Rectangle())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .contentShape(Rectangle())
         .enableInjection()
     }
 }

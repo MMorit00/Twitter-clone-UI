@@ -119,10 +119,25 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // 添加更新当前用户的方法
-    func updateCurrentUser(_ updatedUser: User) {
-        DispatchQueue.main.async {
-            self.user = updatedUser
+    // 修改更新方法,添加 transaction 支持
+    func updateCurrentUser(_ updatedUser: User, transaction: Transaction = .init()) {
+        withTransaction(transaction) {
+            // 只更新 following/followers 相关数据
+            if let currentUser = self.user {
+                var newUser = currentUser
+                newUser.following = updatedUser.following
+                newUser.followers = updatedUser.followers
+                self.user = newUser
+            }
+        }
+    }
+
+    // 添加静默更新方法
+    func silentlyUpdateFollowing(_ following: [String]) {
+        if var currentUser = user {
+            currentUser.following = following
+            // 直接更新，不触发 objectWillChange
+            user = currentUser
         }
     }
 }

@@ -6,9 +6,12 @@ class TweetCellViewModel: ObservableObject {
     @Published var tweet: Tweet
     @Published var user: User?
     @Published var isLoading = false
+    let currentUser: User
 
-    init(tweet: Tweet) {
+    init(tweet: Tweet, currentUser: User = AuthViewModel.shared.user!) {
         self.tweet = tweet
+        self.currentUser = currentUser
+        checkIfUserLikedTweet()
         fetchUser()
     }
 
@@ -49,5 +52,33 @@ class TweetCellViewModel: ObservableObject {
     var imageUrl: URL? {
         guard tweet.image == true else { return nil }
         return URL(string: "http://localhost:3000/tweets/\(tweet.id)/image")
+    }
+
+    func checkIfUserLikedTweet() {
+        if let likes = tweet.likes {
+            tweet.didLike = likes.contains(currentUser.id)
+        }
+    }
+
+    func likeTweet() {
+        let isLiked = tweet.didLike ?? false
+
+        RequestServices.likeTweet(tweetId: tweet.id, isLiked: isLiked) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    self?.tweet.didLike?.toggle()
+
+                    if isLiked {
+                        self?.tweet.likes?.removeAll(where: { $0 == self?.currentUser.id })
+                    } else {
+                        self?.tweet.likes = (self?.tweet.likes ?? []) + [self?.currentUser.id ?? ""]
+                    }
+
+                case let .failure(error):
+                    print("Error liking tweet: \(error)")
+                }
+            }
+        }
     }
 }
