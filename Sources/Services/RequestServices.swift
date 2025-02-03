@@ -288,73 +288,135 @@ public class RequestServices {
         task.resume()
     }
 
-    static func fetchData(completion: @escaping (_ result: Result<Data?, NetworkError>) -> Void) {
-        let url = URL(string: requestDomain)!
-
-        let session = URLSession.shared
-
-        var request = URLRequest(url: url)
-
-        request.httpMethod = "GET"
-
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-
-        let task = session.dataTask(with: request) { data, _, err in
-            guard err == nil else {
-                completion(.failure(.noData))
-                return
-            }
-
-            guard let data = data else { return }
-
-            completion(.success(data))
-        }
-
-        task.resume()
+ static func fetchData(completion: @escaping (_ result: Result<Data?, NetworkError>) -> Void) {
+    guard let token = UserDefaults.standard.string(forKey: "jwt") else {
+        completion(.failure(.noToken))
+        return
     }
+    
+    // 确保URL正确拼接
+    guard let url = URL(string: requestDomain + "/notifications") else {
+        completion(.failure(.invalidURL))
+        return
+    }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    
+    // 添加认证 token
+    request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.addValue("application/json", forHTTPHeaderField: "Accept")
+    
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let httpResponse = response as? HTTPURLResponse {
+            print("HTTP Status Code: \(httpResponse.statusCode)")  // 输出响应的 HTTP 状态码
+        }
+        
+        if let error = error {
+            print("Error fetching data: \(error.localizedDescription)")  // 打印请求错误
+            completion(.failure(.custom(error.localizedDescription)))
+            return
+        }
+        
+        guard let data = data else {
+            print("No data received")  // 没有接收到数据时的错误提示
+            completion(.failure(.noData))
+            return
+        }
+        
+        // 打印返回的原始数据
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("Raw response: \(responseString)")
+        }
+        
+        // 验证返回的数据是否为有效的 JSON
+        do {
+            _ = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+            completion(.success(data))
+        } catch {
+            print("Invalid JSON response: \(error)")  // 解析JSON失败
+            completion(.failure(.custom("Invalid JSON response")))
+        }
+    }
+    
+    task.resume()
+}
 
     public static func sendNotification(username: String, notSenderId: String, notReceiverId: String, notificationType: String, postText: String, completion: @escaping (_ result: [String: Any]?) -> Void) {
-        var params: [String: Any] {
-            return postText.isEmpty ? ["username": username, "notSenderId": notSenderId, "notReceiverId": notReceiverId, "notificationType": notificationType] as [String: Any] : ["username": username, "notSenderId": notSenderId, "notReceiverId": notReceiverId, "notificationType": notificationType, "postText": postText] as [String: Any]
+        // 确保 notificationReceiverId 是有效的字符串，并符合 MongoDB ObjectId 格式
+        guard !notReceiverId.isEmpty else {
+            print("Error: notificationReceiverId is empty.")
+            return
         }
 
-        let url = URL(string: requestDomain)!
+
+        // 构建请求参数
+        var params: [String: Any] {
+            return postText.isEmpty ? [
+                "username": username,
+                "notSenderId": notSenderId,
+                "notReceiverId": notReceiverId, // 确保传递的是字符串
+                "notificationType": notificationType
+            ] : [
+                "username": username,
+                "notSenderId": notSenderId,
+                "notReceiverId": notReceiverId, // 确保传递的是字符串
+                "notificationType": notificationType,
+                "postText": postText,
+            ]
+        }
+
+        // 打印请求参数，调试请求
+        print("Sending notification with params: \(params)") // Debugging the params being sent
+
+        // 确保正确的请求URL
+        guard let url = URL(string: requestDomain + "/notifications") else {
+            print("Invalid URL for sending notification.")
+            return
+        }
 
         let session = URLSession.shared
-
         var request = URLRequest(url: url)
 
         request.httpMethod = "POST"
-
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
         } catch {
-            print(error)
+            print("Error serializing JSON: \(error)")
+            return
         }
 
-        let token = UserDefaults.standard.string(forKey: "jsonwebtoken")!
-        print("Bearer \(token)")
-
+        let token = UserDefaults.standard.string(forKey: "jwt")!
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
 
         let task = session.dataTask(with: request) { data, _, err in
-            guard err == nil else { return }
+            // 打印请求错误
+            if let err = err {
+                print("Error sending notification: \(err.localizedDescription)")
+                return
+            }
 
-            guard let data = data else { return }
+            guard let data = data else {
+                print("No data received.")
+                return
+            }
 
+            // 打印原始响应数据
+            print("Raw response: \(String(data: data, encoding: .utf8) ?? "No data")")
+
+            // 尝试解析响应
             do {
                 if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
+                    print("Notification sent successfully: \(json)") // Debugging successful response
                     completion(json)
                 }
             } catch {
-                print(error)
+                print("Error decoding response: \(error)") // Debugging response decoding error
             }
         }
-
         task.resume()
     }
 }

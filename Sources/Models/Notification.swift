@@ -6,18 +6,18 @@ struct Notification: Decodable, Identifiable {
     var id: String {
         return _id
     }
+
     var username: String
     var notSenderId: String
     var notReceiverId: String
     var postText: String?
     var notificationType: NotificationType
-    
 }
 
 enum NotificationType: String, Decodable {
-    case like = "like"
-    case follow = "follow"
-    
+    case like
+    case follow
+
     var notificationMessage: String {
         switch self {
         case .like: return "liked your Tweet"
@@ -25,6 +25,3 @@ enum NotificationType: String, Decodable {
         }
     }
 }
-
-
-

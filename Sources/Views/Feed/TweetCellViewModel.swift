@@ -71,8 +71,20 @@ class TweetCellViewModel: ObservableObject {
 
                     if isLiked {
                         self?.tweet.likes?.removeAll(where: { $0 == self?.currentUser.id })
+
                     } else {
                         self?.tweet.likes = (self?.tweet.likes ?? []) + [self?.currentUser.id ?? ""]
+                        RequestServices.requestDomain = "http://localhost:3000"
+                        print("Sending notification: Username: \(self?.currentUser.username ?? ""), Sender ID: \(self?.currentUser.id ?? ""), Receiver ID: \(self?.tweet.userId ?? "")")
+                        RequestServices.sendNotification(
+                            username: self?.currentUser.username ?? "",
+                            notSenderId: self?.currentUser.id ?? "",
+                            notReceiverId: self?.tweet.userId ?? "",
+                            notificationType: NotificationType.like.rawValue,
+                            postText: self?.tweet.text ?? ""
+                        ) { result in
+                            print("Notification result: \(result)")
+                        }
                     }
 
                 case let .failure(error):

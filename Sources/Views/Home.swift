@@ -25,7 +25,7 @@ struct HomeView: View {
                     }
                     .tag(1)
                 
-                NotificationsView()
+              NotificationsView(user: viewModel.user!)
                     .tabItem {
                         Image(systemName: "bell")
                         Text("Notifications")

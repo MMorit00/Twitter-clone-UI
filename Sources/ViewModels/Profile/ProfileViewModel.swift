@@ -31,7 +31,8 @@ class ProfileViewModel: ObservableObject {
 
         // 如果是查看其他用户的profile，就调用 fetchUserData
         if let userId = userId,
-           userId != AuthViewModel.shared.user?.id {
+           userId != AuthViewModel.shared.user?.id
+        {
             fetchUserData(userId: userId)
         } else {
             // 如果是当前用户，则订阅 AuthViewModel.shared.$user
@@ -154,7 +155,7 @@ class ProfileViewModel: ObservableObject {
         isFollowing = isFollowed
     }
 
-  func follow() {
+    func follow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
         RequestServices.followingProcess(userId: user.id, isFollowing: false) { [weak self] result in
             DispatchQueue.main.async {
@@ -171,7 +172,7 @@ class ProfileViewModel: ObservableObject {
                         self?.user = updatedUser
                         self?.isFollowing = true
                     }
-                    
+
                     // 同时更新全局当前登录用户（如果本次操作涉及更新我的 following 数组）
                     if currentUser.id == AuthViewModel.shared.user?.id {
                         var globalUser = AuthViewModel.shared.user!
@@ -182,6 +183,12 @@ class ProfileViewModel: ObservableObject {
                         // 重新整体赋值全局对象，触发更新
                         AuthViewModel.shared.user = globalUser
                     }
+
+                    RequestServices.requestDomain = "http://localhost:3000/notifications"
+//                    RequestServices.sendNotification(username: currentUser.username, notSenderId: currentUser.id, notReceiverId: self?.user.id ?? "", notificationType: NotificationType.follow.rawValue, postText: "") { result in
+//                        print("FOLLOWED")
+//                      print(result as Any)
+//                    }
                     print("Follow response: \(response.message)")
                 case let .failure(error):
                     print("Follow error: \(error.localizedDescription)")
@@ -189,7 +196,7 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
-    
+
     func unfollow() {
         guard let currentUser = AuthViewModel.shared.user else { return }
         RequestServices.followingProcess(userId: user.id, isFollowing: true) { [weak self] result in
@@ -202,7 +209,7 @@ class ProfileViewModel: ObservableObject {
                     updatedUser.isFollowed = false
                     self?.user = updatedUser
                     self?.isFollowing = false
-                    
+
                     // 同步更新全局当前登录用户的 following 列表
                     if currentUser.id == AuthViewModel.shared.user?.id {
                         var globalUser = AuthViewModel.shared.user!
