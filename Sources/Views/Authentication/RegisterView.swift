@@ -1,16 +1,16 @@
-import SwiftUI
-
+import SwiftUI 
 struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
-    @State private var username = ""
+    @State private var username = ""  // 已存在的状态变量
     @State private var email = ""
     @State private var password = ""
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showSuccess = false
     @ObserveInjection var inject
-     @EnvironmentObject private var viewModel: AuthViewModel
+    @EnvironmentObject private var viewModel: AuthViewModel
+    
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -22,54 +22,55 @@ struct RegisterView: View {
                     }
                     Spacer()
                 }
-
                 Image("X")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 24, height: 24)
             }
             .padding(.horizontal)
-
+            
             Text("Create your account")
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(.horizontal)
-
+            
             // Form Fields
             CustomAuthTextField(
                 placeholder: "Name",
                 text: $name,
                 keyboardType: .default
             )
-
+            
+            // ★ 新增 Username 输入框 ★
+            CustomAuthTextField(
+                placeholder: "Username",
+                text: $username,
+                keyboardType: .default
+            )
+            
             CustomAuthTextField(
                 placeholder: "Email",
                 text: $email,
                 keyboardType: .emailAddress
             )
-
+            
             SecureAuthTextField(
                 placeholder: "Password",
                 text: $password
             )
-
+            
             Spacer()
-
+            
             // Next Button
             Button(action: {
                 Task {
                     do {
-                         try await viewModel.register(
-                             name: name,
-                             username: username, email: email,
-                             password: password
-                         )
-
-//                        try await viewModel.register(
-//                            name: "wadawd",
-//                            username: "awdwd", email: "teaasast@test.com",
-//                            password: "tasddest1234"
-//                        )
+                        try await viewModel.register(
+                            name: name,
+                            username: username,  // 传入 username
+                            email: email,
+                            password: password
+                        )
                         showSuccess = true
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                             dismiss()
@@ -91,7 +92,7 @@ struct RegisterView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 48)
-
+            
             if showSuccess {
                 Text("注册成功！")
                     .foregroundColor(.green)
@@ -103,7 +104,7 @@ struct RegisterView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
-
+            
             if showError {
                 Text(errorMessage)
                     .foregroundColor(.red)

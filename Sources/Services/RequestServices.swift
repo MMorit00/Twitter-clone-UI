@@ -1,5 +1,6 @@
 
 import Foundation
+
 // 添加响应模型
 struct FollowResponse: Codable {
     let message: String
@@ -30,6 +31,7 @@ enum NetworkError: LocalizedError {
         }
     }
 }
+
 // 添加点赞响应模型
 struct ErrorResponse: Codable {
     let message: String
@@ -286,62 +288,73 @@ public class RequestServices {
         task.resume()
     }
 
-    // // 发送关注通知的方法
-    // public static func sendNotification(
-    //     username: String,
-    //     notSenderId: String,
-    //     notReceiverId: String,
-    //     notificationType: String,
-    //     postText: String,
-    //     completion: @escaping ([String: Any]) -> Void
-    // ) {
-    //     guard let url = URL(string: requestDomain) else { return }
+    static func fetchData(completion: @escaping (_ result: Result<Data?, NetworkError>) -> Void) {
+        let url = URL(string: requestDomain)!
 
-    //     var request = URLRequest(url: url)
-    //     request.httpMethod = "POST"
+        let session = URLSession.shared
 
-    //     // 添加认证
-    //     guard let token = UserDefaults.standard.string(forKey: "JSON_WEB_TOKEN") else { return }
-    //     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        var request = URLRequest(url: url)
 
-    //     // 设置请求头
-    //     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    //     request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpMethod = "GET"
 
-    //     // 构建请求体
-    //     let params: [String: Any] = [
-    //         "username": username,
-    //         "notSenderId": notSenderId,
-    //         "notReceiverId": notReceiverId,
-    //         "notificationType": notificationType,
-    //         "postText": postText,
-    //     ]
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
 
-    //     do {
-    //         let jsonData = try JSONSerialization.data(withJSONObject: params)
-    //         request.httpBody = jsonData
+        let task = session.dataTask(with: request) { data, _, err in
+            guard err == nil else {
+                completion(.failure(.noData))
+                return
+            }
 
-    //         let task = URLSession.shared.dataTask(with: request) { data, _, error in
-    //             if let error = error {
-    //                 print("Error: \(error.localizedDescription)")
-    //                 return
-    //             }
+            guard let data = data else { return }
 
-    //             guard let data = data else { return }
+            completion(.success(data))
+        }
 
-    //             do {
-    //                 if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
-    //                     completion(json)
-    //                 }
-    //             } catch {
-    //                 print("Error: \(error.localizedDescription)")
-    //             }
-    //         }
+        task.resume()
+    }
 
-    //         task.resume()
+    public static func sendNotification(username: String, notSenderId: String, notReceiverId: String, notificationType: String, postText: String, completion: @escaping (_ result: [String: Any]?) -> Void) {
+        var params: [String: Any] {
+            return postText.isEmpty ? ["username": username, "notSenderId": notSenderId, "notReceiverId": notReceiverId, "notificationType": notificationType] as [String: Any] : ["username": username, "notSenderId": notSenderId, "notReceiverId": notReceiverId, "notificationType": notificationType, "postText": postText] as [String: Any]
+        }
 
-    //     } catch {
-    //         print("Error: \(error.localizedDescription)")
-    //     }
-    // }
+        let url = URL(string: requestDomain)!
+
+        let session = URLSession.shared
+
+        var request = URLRequest(url: url)
+
+        request.httpMethod = "POST"
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+        } catch {
+            print(error)
+        }
+
+        let token = UserDefaults.standard.string(forKey: "jsonwebtoken")!
+        print("Bearer \(token)")
+
+        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+
+        let task = session.dataTask(with: request) { data, _, err in
+            guard err == nil else { return }
+
+            guard let data = data else { return }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
+                    completion(json)
+                }
+            } catch {
+                print(error)
+            }
+        }
+
+        task.resume()
+    }
 }

@@ -1,23 +1,26 @@
 import SwiftUI
 
+
 struct NotificationsView: View {
-    @ObserveInjection var inject
     
+    let user: User
+    
+    @ObservedObject var viewModel: NotificationsViewModel
+    
+    init (user: User) {
+        self.user = user
+        self.viewModel = NotificationsViewModel(user: user)
+    }
     var body: some View {
         VStack {
             ScrollView {
-                LazyVStack {
-                    ForEach(0 ..< 9) { _ in
-                        NotificationCell()
-                        
-                    }
-                }
+                ForEach(viewModel.notifications) { not in
+                    
+                    NotificationCell(notification: not)
+                    
+                } 
             }
         }
-        .enableInjection()
     }
 }
 
-#Preview {
-    NotificationsView()
-} 

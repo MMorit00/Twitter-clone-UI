@@ -63,5 +63,38 @@ struct User: Codable, Identifiable, Hashable {
             lhs.email == rhs.email
     }
 
+       // 自定义解码，缺失字段使用默认值
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.username = try container.decode(String.self, forKey: .username)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.email = try container.decode(String.self, forKey: .email)
+        self.location = try container.decodeIfPresent(String.self, forKey: .location)
+        self.bio = try container.decodeIfPresent(String.self, forKey: .bio)
+        self.website = try container.decodeIfPresent(String.self, forKey: .website)
+        self.avatarExists = try container.decodeIfPresent(Bool.self, forKey: .avatarExists)
+        self.followers = try container.decodeIfPresent([String].self, forKey: .followers) ?? []
+        self.following = try container.decodeIfPresent([String].self, forKey: .following) ?? []
+        self.isFollowed = false
+    }
+    
+    // 编码方法（若需要将 User 编码为 JSON，可保留此方法）
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(username, forKey: .username)
+        try container.encode(name, forKey: .name)
+        try container.encode(email, forKey: .email)
+        try container.encodeIfPresent(location, forKey: .location)
+        try container.encodeIfPresent(bio, forKey: .bio)
+        try container.encodeIfPresent(website, forKey: .website)
+        try container.encodeIfPresent(avatarExists, forKey: .avatarExists)
+        try container.encode(followers, forKey: .followers)
+        try container.encode(following, forKey: .following)
+    }
+    
+    
+
     
 }

@@ -26,59 +26,63 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    // 登录方法
-    func login(email: String, password: String) {
-        AuthService.login(email: email, password: password) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case let .success(response):
-                    // 保存token和userId
-                    self?.token = response.token
-                    self?.userId = response.user.id
-                    // 保存用户信息
-                    self?.user = response.user
-                    // 更新认证状态
-                    self?.isAuthenticated = true
-                    print("Logged in successfully")
+   // 在 AuthViewModel 的 login 方法中
+func login(email: String, password: String) {
+    AuthService.login(email: email, password: password) { [weak self] result in
+        DispatchQueue.main.async {
+            switch result {
+            case let .success(response):
+                // 保存 token 和 userId (如果 token 为 nil，则赋值为空字符串)
+                self?.token = response.token ?? ""
+                self?.userId = response.user.id
+                // 保存用户信息
+                self?.user = response.user
+                // 更新认证状态
+                self?.isAuthenticated = true
+                print("Logged in successfully")
 
-                case let .failure(error):
-                    // 处理错误
-                    self?.error = error
-                    print("Login error: \(error)")
-                }
+            case let .failure(error):
+                // 处理错误
+                self?.error = error
+                print("Login error: \(error)")
             }
         }
     }
+}
 
     // 注册方法
-    func register(name: String, username: String, email: String, password: String) {
-        // 调用 AuthService 的 register 方法
+   func register(name: String, username: String, email: String, password: String) async throws {
+     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
         AuthService.register(
             email: email,
             username: username,
             password: password,
             name: name
         ) { [weak self] result in
-            // 确保在主线程更新 UI
-            DispatchQueue.main.async {
-                switch result {
-                case let .success(response):
-                    // 处理成功响应
-                    self?.user = response.user
-                    // 可以保存 token 等其他操作
-
-                case let .failure(error):
-                    // 处理错误
-                    switch error {
-                    case .invalidCredentials:
-                        print("Invalid credentials")
-                    case let .custom(message):
-                        print("Error: \(message)")
-                    }
+            guard let self = self else {
+                continuation.resume(throwing: AuthService.AuthenticationError.custom("Self is nil"))
+                return
+            }
+            
+            switch result {
+            case let .success(user):
+                // 更新用户信息（此时还没有 token, 所以接下来调用 login 获取 token）
+                DispatchQueue.main.async {
+                    self.user = user
+                    // 进行登录来获取 token
+                    self.login(email: email, password: password)
+                    continuation.resume()
+                }
+                
+            case let .failure(error):
+                DispatchQueue.main.async {
+                    self.error = error
+                    continuation.resume(throwing: error)
                 }
             }
         }
     }
+}
 
     // 登出方法
     func signOut() {
