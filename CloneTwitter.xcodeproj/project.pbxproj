@@ -3,13 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		09645D6F9008FE049B9E6AD5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C47B62688C0B8FA5AEBEDDE7 /* LoginView.swift */; };
 		0A2DD39C4923E06AB98EE34F /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 243FCFAE2D6D3CFD6FBB5430 /* AuthViewModel.swift */; };
 		0A8B74E641A7779B4EE6D917 /* SecureAuthTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C73FED9CDD1A96951C46B47 /* SecureAuthTextField.swift */; };
+		169EE1DAE56A289F174A2D32 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91F181DAA9932F5818407A14 /* SettingsView.swift */; };
 		17A25AAE7253BA08CADB788B /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B17AFB8AE4EE37B4CAFFE17 /* MessagesView.swift */; };
 		1CB2CC28E9B2C49A231DDB64 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0253693C63C2E5633609C7BF /* EditProfileView.swift */; };
 		210266447FC610A6F0AA896B /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125A1096D1AB6901247C2EB0 /* App.swift */; };
@@ -94,6 +95,7 @@
 		82EC66227B709FA15587BE1F /* AppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTests.swift; sourceTree = "<group>"; };
 		851494BC66C76FAA295A668E /* EditProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileViewModel.swift; sourceTree = "<group>"; };
 		897C6D1F772896D5B3AD1736 /* File.midi */ = {isa = PBXFileReference; lastKnownFileType = audio.midi; path = File.midi; sourceTree = "<group>"; };
+		91F181DAA9932F5818407A14 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		92B06431A96F74543EC1E781 /* MultilineTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultilineTextField.swift; sourceTree = "<group>"; };
 		944DAF11CB06C0820D3A0AEE /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		979A81E1FD0D5767C968969D /* CloneTwitter.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CloneTwitter.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -212,6 +214,7 @@
 			children = (
 				0C7101E668055256FDF11D06 /* Home.swift */,
 				9FDC8BBE113875770C30473C /* MainView.swift */,
+				91F181DAA9932F5818407A14 /* SettingsView.swift */,
 				72E675E399594F8320E2111B /* SlideMenu.swift */,
 				5CD1244A2A348406C178F79E /* TopBar.swift */,
 				D48EDCCE9A6EB9FEBDB0C4E2 /* Authentication */,
@@ -488,6 +491,7 @@
 				EF7404C4BF8B7F4E6A6932BB /* SearchView.swift in Sources */,
 				AA413013FA1B5446FAA2E329 /* SearchViewModel.swift in Sources */,
 				0A8B74E641A7779B4EE6D917 /* SecureAuthTextField.swift in Sources */,
+				169EE1DAE56A289F174A2D32 /* SettingsView.swift in Sources */,
 				7FB77780770D8E727593783C /* SlideMenu.swift in Sources */,
 				8BCF349E8CE6576F16437424 /* TabButton.swift in Sources */,
 				F3390ADC36F710542E90E111 /* TopBar.swift in Sources */,
@@ -639,11 +643,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				"OTHER_LDFLAGS[config=Debug][sdk=iphonesimulator*]" = (
-					"$(inherited)",
-					"-Xlinker",
-					"-interposable",
-				);
+				"OTHER_LDFLAGS[config=Debug][sdk=iphonesimulator*]" = "$(inherited) -Xlinker -interposable";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pan.clonetwitter;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
@@ -668,11 +668,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				"OTHER_LDFLAGS[config=Debug][sdk=iphonesimulator*]" = (
-					"$(inherited)",
-					"-Xlinker",
-					"-interposable",
-				);
+				"OTHER_LDFLAGS[config=Debug][sdk=iphonesimulator*]" = "$(inherited) -Xlinker -interposable";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pan.clonetwitter;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;

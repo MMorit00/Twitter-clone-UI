@@ -5,29 +5,30 @@ struct MainView: View {
     @State private var showMenu = false
     @State private var showProfile = false
     @State private var offset: CGFloat = 0
-    @State private var selectedTab = 0  // 添加这行
+    @State private var selectedTab = 0 // 添加这行
     @EnvironmentObject private var viewModel: AuthViewModel
-    
+
     // 侧边菜单宽度（为了方便修改）
     private var menuWidth: CGFloat {
         UIScreen.main.bounds.width - 90
     }
+
     @State private var searchText = ""
     @State private var isSearching = false
-    
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack(alignment: .leading) {
                 VStack(spacing: 0) {
-                    TopBar(showMenu: $showMenu, 
-                          offset: $offset, 
-                          selectedTab: $selectedTab,
-                          searchText: $searchText,
-                          isSearching: $isSearching )
-                    
+                    TopBar(showMenu: $showMenu,
+                           offset: $offset,
+                           selectedTab: $selectedTab,
+                           searchText: $searchText,
+                           isSearching: $isSearching)
+
                     HomeView(selectedTab: $selectedTab,
-                            searchText: $searchText,
-                            isSearching: $isSearching)
+                             searchText: $searchText,
+                             isSearching: $isSearching)
                 }
                 // 根据 offset 偏移，用于把主界面往右推
                 .offset(x: offset)

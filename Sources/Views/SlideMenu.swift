@@ -3,16 +3,18 @@ import SwiftUI
 
 struct SlideMenu: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
-   
+    @State private var showSettings = false  // 添加这一行
+
     var onProfileTap: () -> Void
     @State private var isExpanded = false
     @ObserveInjection var inject
-   private var avatarURL: URL? {
+    private var avatarURL: URL? {
         guard let user = authViewModel.user else {
             return nil
         }
         return URL(string: "http://localhost:3000/users/\(user.id)/avatar")
-    } 
+    }
+
     var body: some View {
         VStack(alignment: .leading) {
             // 顶部用户信息区域
@@ -35,7 +37,7 @@ struct SlideMenu: View {
                                 .padding(.bottom, 12)
 
                             VStack(alignment: .leading, spacing: 0) {
-                              Text(authViewModel.user!.name)
+                                Text(authViewModel.user!.name)
                                     .font(.system(size: 14))
                                     .padding(.bottom, 4)
                                 Text("@\(authViewModel.user!.username)")
@@ -107,9 +109,14 @@ struct SlideMenu: View {
 
             // 底部区域
             VStack(alignment: .leading, spacing: 12) {
-                Text("Settings and privacy")
-                    .font(.system(size: 14))
-                    .bold()
+                Button {
+                    showSettings = true
+                } label: {
+                    Text("Settings and privacy")
+                        .font(.system(size: 14))
+                        .bold()
+                }
+                
                 Text("Help Center")
                     .font(.system(size: 14))
                     .foregroundStyle(.gray)
@@ -123,6 +130,9 @@ struct SlideMenu: View {
                 .padding(.vertical, 12)
                 .bold()
             }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
         .padding(.top, 12)
         .padding(.horizontal, 24)

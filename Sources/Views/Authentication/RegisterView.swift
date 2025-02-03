@@ -59,18 +59,17 @@ struct RegisterView: View {
             Button(action: {
                 Task {
                     do {
-                        // try await viewModel.register(
-                        //     name: name,
-                        //     email: email,
-                        //     username: username,
-                        //     password: password
-                        // )
+                         try await viewModel.register(
+                             name: name,
+                             username: username, email: email,
+                             password: password
+                         )
 
-                        try await viewModel.register(
-                            name: "wadawd",
-                            username: "awdwd", email: "teaasast@test.com",
-                            password: "tasddest1234"
-                        )
+//                        try await viewModel.register(
+//                            name: "wadawd",
+//                            username: "awdwd", email: "teaasast@test.com",
+//                            password: "tasddest1234"
+//                        )
                         showSuccess = true
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                             dismiss()
