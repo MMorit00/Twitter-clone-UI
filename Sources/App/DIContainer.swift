@@ -50,7 +50,7 @@ final class DIContainer {
         container.register(apiClient, type: .apiClient)
         
         // 配置 AuthService
-        let authService = AuthService(apiClient: apiClient)
+        let authService = AuthService1(apiClient: apiClient)
         container.register(authService, type: .authService)
         
         // 配置业务服务

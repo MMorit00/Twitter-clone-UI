@@ -14,45 +14,45 @@ struct APIResponse: Codable {
     let token: String
 }
 
-// import Foundation
+import Foundation
 
-// final class AuthService: AuthServiceProtocol {
-//     private let apiClient: APIClientProtocol
+final class AuthService1: AuthServiceProtocol {
+    private let apiClient: APIClientProtocol
 
-//     init(apiClient: APIClientProtocol) {
-//         self.apiClient = apiClient
-//     }
+    init(apiClient: APIClientProtocol) {
+        self.apiClient = apiClient
+    }
 
-//     func login(email: String, password: String) async throws -> APIResponse {
-//         let endpoint = AuthEndpoint.login(email: email, password: password)
-//         let response: APIResponse = try await apiClient.sendRequest(endpoint)
+    func login(email: String, password: String) async throws -> APIResponse {
+        let endpoint = AuthEndpoint.login(email: email, password: password)
+        let response: APIResponse = try await apiClient.sendRequest(endpoint)
 
-//         // 保存 token
-//         UserDefaults.standard.set(response.token, forKey: "jwt")
+        // 保存 token
+        UserDefaults.standard.set(response.token, forKey: "jwt")
 
-//         return response
-//     }
+        return response
+    }
 
-//     func register(email: String, username: String, password: String, name: String) async throws -> User {
-//         let endpoint = AuthEndpoint.register(
-//             email: email,
-//             username: username,
-//             password: password,
-//             name: name
-//         )
-//         return try await apiClient.sendRequest(endpoint)
-//     }
+    func register(email: String, username: String, password: String, name: String) async throws -> User {
+        let endpoint = AuthEndpoint.register(
+            email: email,
+            username: username,
+            password: password,
+            name: name
+        )
+        return try await apiClient.sendRequest(endpoint)
+    }
 
-//     func fetchCurrentUser() async throws -> User {
-//         let endpoint = AuthEndpoint.fetchCurrentUser
-//         return try await apiClient.sendRequest(endpoint)
-//     }
+    func fetchCurrentUser() async throws -> User {
+        let endpoint = AuthEndpoint.fetchCurrentUser
+        return try await apiClient.sendRequest(endpoint)
+    }
 
-//     func updateProfile(data: [String: Any]) async throws -> User {
-//         let endpoint = AuthEndpoint.updateProfile(data: data)
-//         return try await apiClient.sendRequest(endpoint)
-//     }
-// }
+    func updateProfile(data: [String: Any]) async throws -> User {
+        let endpoint = AuthEndpoint.updateProfile(data: data)
+        return try await apiClient.sendRequest(endpoint)
+    }
+}
 
 // MARK: - Mock 实现，用于测试
 
