@@ -253,6 +253,12 @@ struct ProfileView: View {
                 }
             }
         }
+//       .onDisappear {
+//            if let currentUserId = authViewModel.currentUser?.id,
+//               currentUserId == viewModel.user.id {
+//                authViewModel.updateCurrentUser(viewModel.user)
+//            }
+//        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
