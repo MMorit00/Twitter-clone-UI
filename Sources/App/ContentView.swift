@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var authState: AuthState
     
     var body: some View {
         Group {
-            if authViewModel.isAuthenticated {
+            if authState.isAuthenticated {
                 MainView()
             } else {
                 WelcomeView()

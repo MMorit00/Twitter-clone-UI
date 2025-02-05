@@ -60,6 +60,7 @@
 		B60970782D536DC90032F4CF /* DIContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E0F8EDF7FDAED6B4FD01B /* DIContainerTests.swift */; };
 		B60970792D536DCC0032F4CF /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE374A171296AD224D1BF1C8 /* APIClientTests.swift */; };
 		B609707B2D53794B0032F4CF /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B609707A2D53794B0032F4CF /* App.swift */; };
+		B609707D2D5385890032F4CF /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B609707C2D5385890032F4CF /* AuthState.swift */; };
 		B8A02EBDEE432D9F43AE0049 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7352DB6F1062A3887691EE77 /* RegisterView.swift */; };
 		B9ABDC386C8BDBE0CBBC9CED /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E3914C4587AB9AE684B803 /* FeedViewModel.swift */; };
 		C68B29F427476AD1D169FD1C /* CreateTweetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEAC94C4DC0E8ECCA2BC71D /* CreateTweetView.swift */; };
@@ -133,6 +134,7 @@
 		B14BF60AC679063093FADE5A /* MessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
 		B609706C2D536DB10032F4CF /* CloneTwitterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CloneTwitterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B609707A2D53794B0032F4CF /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		B609707C2D5385890032F4CF /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		BBCC4AAE9275D72F7B097B96 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		BCD7898679A5681A2D7F6645 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		C2AECAD09846AD417141E19A /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
@@ -484,6 +486,7 @@
 			isa = PBXGroup;
 			children = (
 				61B39B8D904517C1C32AF91D /* AuthViewModel.swift */,
+				B609707C2D5385890032F4CF /* AuthState.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -769,6 +772,7 @@
 				5D814DA30295F68E90CE0FFD /* ProfileView.swift in Sources */,
 				5984A8CEE38ACEBBB22DF543 /* ProfileViewModel.swift in Sources */,
 				B8A02EBDEE432D9F43AE0049 /* RegisterView.swift in Sources */,
+				B609707D2D5385890032F4CF /* AuthState.swift in Sources */,
 				97224267A5E4AF3DCA7CB446 /* RequestServices.swift in Sources */,
 				4F41E88C3D8A52450B608CB9 /* Resources.swift in Sources */,
 				015135E631653147116C5BF2 /* SearchBar.swift in Sources */,

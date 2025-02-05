@@ -4,14 +4,10 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var emailDone = false
-    @State private var showError = false
-    @State private var isLoading = false
-    @State private var loginStatus = ""
-    @State private var showSuccessMessage = false
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.dismiss) private var dismiss
     @ObserveInjection var inject
-    @EnvironmentObject private var viewModel: AuthViewModel
+    @EnvironmentObject private var authState: AuthState
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +87,7 @@ struct LoginView: View {
                     text: $password
                 )
                 .padding(.top, 30)
-                .disabled(isLoading)
+                .disabled(authState.isLoading)
 
                 Spacer()
 
@@ -99,43 +95,24 @@ struct LoginView: View {
                     // Login Button
                     Button(action: {
                         Task {
-                            isLoading = true
-                            showError = false
-                            showSuccessMessage = false
-                            loginStatus = "正在登录..."
-
-                            do {
-                                // 使用模拟数据进行测试
-                                viewModel.login(
-                                    email: "teaasast@test.com", // 模拟数据
-                                    password: "tasddest1234" // 模拟数据
-                                )
-
-                                // 登录成功
-                                showSuccessMessage = true
-                                loginStatus = "登录成功！正在跳转..."
-
+                            await authState.login(email: email, password: password)
+                            
+                            if authState.isAuthenticated {
                                 // 延迟2秒后关闭页面
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                     dismiss()
                                 }
-
-                            } catch {
-                                showError = true
-                                loginStatus = "登录失败：\(error.localizedDescription)"
                             }
-
-                            isLoading = false
                         }
                     }) {
                         HStack {
-                            if isLoading {
+                            if authState.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .padding(.trailing, 8)
                             }
 
-                            Text(isLoading ? "登录中..." : "Log in")
+                            Text(authState.isLoading ? "登录中..." : "Log in")
                                 .foregroundColor(.white)
                                 .font(.title3)
                                 .fontWeight(.bold)
@@ -143,56 +120,31 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(
-                            password.isEmpty || isLoading
+                            password.isEmpty || authState.isLoading
                                 ? Color.gray
                                 : Color("BG")
                         )
                         .clipShape(Capsule())
                     }
-                    .disabled(password.isEmpty || isLoading)
+                    .disabled(password.isEmpty || authState.isLoading)
                     .padding(.horizontal)
-
-                    // 状态信息显示
-                    if !loginStatus.isEmpty {
-                        Text(loginStatus)
-                            .foregroundColor(
-                                showSuccessMessage ? .green :
-                                    showError ? .red : .gray
-                            )
-                            .font(.subheadline)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                            .animation(.easeInOut, value: loginStatus)
-                    }
-
-                    // 成功信息
-                    if showSuccessMessage {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("登录成功")
-                                .foregroundColor(.green)
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-
-                    // 错误信息
-                    if showError {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.red)
-                            Text("登录失败，请检查邮箱和密码")
-                                .foregroundColor(.red)
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
                 }
                 .padding(.bottom, 30)
             }
         }
         .toolbar(.hidden)
         .enableInjection()
-        .disabled(isLoading)
-        .animation(.easeInOut, value: isLoading)
+        .disabled(authState.isLoading)
+        .animation(.easeInOut, value: authState.isLoading)
+        .alert("登录失败", isPresented: .init(
+            get: { authState.error != nil },
+            set: { if !$0 { authState.error = nil } }
+        )) {
+            Button("确定", role: .cancel) {
+                authState.error = nil
+            }
+        } message: {
+            Text(authState.error ?? "未知错误")
+        }
     }
 }

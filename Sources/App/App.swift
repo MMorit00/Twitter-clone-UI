@@ -27,12 +27,20 @@ struct TwitterCloneApp: App {
         
         return container
     }()
+
+
+   @StateObject private var authState: AuthState = {
+        guard let authService: AuthServiceProtocol = DIContainer.defaultContainer().resolve(.authService) else {
+            fatalError("Failed to resolve AuthService")
+        }
+        return AuthState(authService: authService)
+    }()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(\.diContainer, container)
-                .environmentObject(authViewModel)
+                .environmentObject(authState)
         }
     }
 }
