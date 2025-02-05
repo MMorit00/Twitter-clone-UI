@@ -4,27 +4,20 @@ import SwiftUI
 struct TweetCellView: View {
     @ObserveInjection var inject
     @ObservedObject var viewModel: TweetCellViewModel
-
-    // 添加计算属性
-    private var didLike: Bool {
-        viewModel.tweet.didLike ?? false
-    }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 点赞信息 - 如果有点赞则显示
-            if let likes = viewModel.tweet.likes, !likes.isEmpty {
+            if viewModel.likesCount > 0 {
                 HStack(spacing: 8) {
                     Image(systemName: "heart.fill")
                         .foregroundColor(.gray)
-                    Text("\(likes.count) likes")
+                    Text("\(viewModel.likesCount) likes")
                         .font(.system(size: 14))
                         .foregroundColor(.gray)
                 }
                 .padding(.trailing, 16)
             }
-
-            // 主要内容
+            
             HStack(alignment: .top, spacing: 12) {
                 // 头像部分
                 NavigationLink {

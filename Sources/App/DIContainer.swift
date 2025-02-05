@@ -50,11 +50,12 @@ final class DIContainer {
         container.register(apiClient, type: .apiClient)
         
         // 配置 AuthService
-        let authService = AuthService1(apiClient: apiClient)
+        let authService = AuthService(apiClient: apiClient)
         container.register(authService, type: .authService)
         
-        // 配置业务服务
-        // TODO: 后续添加其他服务的注册
+        // 配置 TweetService
+        let tweetService = TweetService(apiClient: apiClient)
+        container.register(tweetService, type: .tweetService)
         
         return container
     }

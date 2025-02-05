@@ -96,7 +96,7 @@ final class AuthService1: AuthServiceProtocol {
         }
     }
 
-    private extension User {
+   extension User {
         static var mock: User {
             User(
                 id: "mock_id",

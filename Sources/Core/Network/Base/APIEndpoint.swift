@@ -14,7 +14,7 @@ enum AuthEndpoint: APIEndpoint {
     case register(email: String, username: String, password: String, name: String)
     case fetchCurrentUser
     case updateProfile(data: [String: Any])
-    
+
     var path: String {
         switch self {
         case .login:
@@ -27,7 +27,7 @@ enum AuthEndpoint: APIEndpoint {
             return "/users/me"
         }
     }
-    
+
     var method: HTTPMethod {
         switch self {
         case .login, .register:
@@ -38,33 +38,33 @@ enum AuthEndpoint: APIEndpoint {
             return .patch
         }
     }
-    
+
     var body: Data? {
         switch self {
         case let .login(email, password):
             let body = ["email": email, "password": password]
             return try? JSONSerialization.data(withJSONObject: body)
-            
+
         case let .register(email, username, password, name):
             let body = [
                 "email": email,
                 "username": username,
                 "password": password,
-                "name": name
+                "name": name,
             ]
             return try? JSONSerialization.data(withJSONObject: body)
-            
+
         case let .updateProfile(data):
             return try? JSONSerialization.data(withJSONObject: data)
-            
+
         default:
             return nil
         }
     }
-    
+
     var headers: [String: String]? {
         var headers = ["Content-Type": "application/json"]
-        
+
         // 对需要认证的接口添加 token
         switch self {
         case .fetchCurrentUser, .updateProfile:
@@ -74,10 +74,10 @@ enum AuthEndpoint: APIEndpoint {
         default:
             break
         }
-        
+
         return headers
     }
-    
+
     var queryItems: [URLQueryItem]? {
         return nil
     }
@@ -89,49 +89,60 @@ enum TweetEndpoint: APIEndpoint {
     case createTweet(text: String, userId: String)
     case likeTweet(tweetId: String)
     case unlikeTweet(tweetId: String)
-    
+    case uploadImage(tweetId: String, imageData: Data)
+
     var path: String {
         switch self {
         case .fetchTweets:
             return "/tweets"
         case .createTweet:
             return "/tweets"
-        case .likeTweet(let id):
+        case let .likeTweet(id):
             return "/tweets/\(id)/like"
-        case .unlikeTweet(let id):
+        case let .unlikeTweet(id):
             return "/tweets/\(id)/unlike"
+        case let .uploadImage(id, _):
+            return "/tweets/\(id)/image"
         }
     }
-    
+
     var method: HTTPMethod {
         switch self {
         case .fetchTweets:
             return .get
-        case .createTweet:
+        case .createTweet, .uploadImage:
             return .post
         case .likeTweet, .unlikeTweet:
             return .put
         }
     }
-    
+
     var body: Data? {
         switch self {
         case let .createTweet(text, userId):
             let body = ["text": text, "userId": userId]
             return try? JSONSerialization.data(withJSONObject: body)
+        case let .uploadImage(_, imageData):
+            return imageData
         default:
             return nil
         }
     }
-    
+
     var headers: [String: String]? {
         var headers = ["Content-Type": "application/json"]
+
+        if case .uploadImage = self {
+            headers["Content-Type"] = "image/jpeg"
+        }
+
         if let token = UserDefaults.standard.string(forKey: "jwt") {
             headers["Authorization"] = "Bearer \(token)"
         }
+
         return headers
     }
-    
+
     var queryItems: [URLQueryItem]? {
         return nil
     }

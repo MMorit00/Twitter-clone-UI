@@ -12,14 +12,17 @@ struct FeedView: View {
             LazyVStack(spacing: 0) {
                 // 使用实际的tweets数据
                 ForEach(viewModel.tweets) { tweet in
-                    TweetCellView(viewModel: TweetCellViewModel(
-                        tweet: tweet,
-                        currentUser: authViewModel.user!
-                    ))
-                    .padding(.horizontal, 10)
-
+                    TweetCellView(
+                        viewModel: TweetCellViewModel(
+                            tweet: tweet,
+                            tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
+                            onTweetUpdated: { updatedTweet in
+                                viewModel.updateTweet(updatedTweet)
+                            }
+                        )
+                    )
+                    .padding(.horizontal)
                     Divider()
-                        .padding()
                 }
             } 
         }
