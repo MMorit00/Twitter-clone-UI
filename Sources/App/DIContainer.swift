@@ -49,6 +49,10 @@ final class DIContainer {
         let apiClient = APIClient(baseURL: APIConfig.baseURL)
         container.register(apiClient, type: .apiClient)
         
+        // 配置 AuthService
+        let authService = AuthService(apiClient: apiClient)
+        container.register(authService, type: .authService)
+        
         // 配置业务服务
         // TODO: 后续添加其他服务的注册
         
