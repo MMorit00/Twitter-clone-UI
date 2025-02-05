@@ -6,10 +6,11 @@ enum NetworkError: LocalizedError {
     case invalidResponse
     case httpError(Int)
     case decodingError(Error)
-    case serverError(String)
-    case noData
+    case serverError
+    case clientError(APIError?)
     case unauthorized
-    case unknown(Error)
+    case noData
+    case maxRetriesExceeded
     case noToken
     case custom(String)
     
@@ -23,16 +24,18 @@ enum NetworkError: LocalizedError {
             return "HTTP错误: \(code)"
         case .decodingError(let error):
             return "数据解析错误: \(error.localizedDescription)"
-        case .serverError(let message):
-            return "服务器错误: \(message)"
-        case .noData:
-            return "没有数据"
+        case .serverError:
+            return "服务器错误"
+        case .clientError(let apiError):
+            return apiError?.message ?? "客户端错误"
         case .unauthorized:
             return "未授权访问"
-        case .unknown(let error):
-            return "未知错误: \(error.localizedDescription)"
+        case .noData:
+            return "没有数据"
+        case .maxRetriesExceeded:
+            return "超过最大重试次数"
         case .noToken:
-            return "缺少认证令牌"
+            return "未找到访问令牌"
         case .custom(let message):
             return message
         }

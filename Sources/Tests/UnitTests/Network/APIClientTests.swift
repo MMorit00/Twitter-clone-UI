@@ -1,5 +1,6 @@
 
 import XCTest
+
 @testable import CloneTwitter
 
 final class APIClientTests: XCTestCase {
@@ -91,12 +92,14 @@ extension NetworkError: Equatable {
              (.invalidResponse, .invalidResponse),
              (.noData, .noData),
              (.unauthorized, .unauthorized),
-             (.noToken, .noToken):
+             (.noToken, .noToken),
+             (.serverError, .serverError),
+             (.maxRetriesExceeded, .maxRetriesExceeded):
             return true
         case (.httpError(let l), .httpError(let r)):
             return l == r
-        case (.serverError(let l), .serverError(let r)):
-            return l == r
+        case (.clientError(let l), .clientError(let r)):
+            return l?.message == r?.message
         case (.custom(let l), .custom(let r)):
             return l == r
         default:
@@ -104,7 +107,6 @@ extension NetworkError: Equatable {
         }
     }
 }
-
 /// 用于测试的 MockEndpoint
 struct MockEndpoint: APIEndpoint {
     var path: String
