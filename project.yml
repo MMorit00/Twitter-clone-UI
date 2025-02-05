@@ -20,9 +20,9 @@ targets:
         type: [.swift, .m, .h, .xcdatamodeld, .xcmappingmodel]
     # 显式指定资源文件
     resources:
-      - path: Sources/Media.xcassets
+      - path: Sources/Resources/Media.xcassets
         type: .xcassets
-      - path: Sources/Localization
+      - path: Sources/Resources/Localization
         type: .strings
     dependencies:
       - package: Inject

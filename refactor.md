@@ -1985,3 +1985,127 @@ Button("Login") {
 
 
 
+
+
+
+
+├── App
+│   ├── App.swift
+│   └── DIContainer.swift
+├── Core
+│   ├── Common
+│   │   └── Extensions
+│   │       └── ImagePicker.swift
+│   ├── Legacy
+│   │   ├── AuthService.swift
+│   │   ├── ImageUploader.swift
+│   │   └── RequestServices.swift
+│   ├── Network
+│   │   ├── Base
+│   │   │   ├── APIClient.swift
+│   │   │   ├── APIEndpoint.swift
+│   │   │   ├── HTTPMethod.swift
+│   │   │   └── NetworkError.swift
+│   │   └── Config
+│   │       ├── APIConfig.swift
+│   │       └── NetworkMonitor.swift
+│   └── Storage
+│       ├── Keychain
+│       │   └── KeychainStore.swift
+│       └── UserDefaults
+│           └── UserDefaultsStore.swift
+├── Features
+│   ├── Auth
+│   │   ├── Models
+│   │   │   └── User.swift
+│   │   ├── Services
+│   │   ├── ViewModels
+│   │   │   └── AuthViewModel.swift
+│   │   └── Views
+│   │       ├── AuthenticationView.swift
+│   │       ├── CustomAuthTextField.swift
+│   │       ├── LoginView.swift
+│   │       ├── RegisterView.swift
+│   │       ├── SecureAuthTextField.swift
+│   │       └── WelcomeView.swift
+│   ├── Feed
+│   │   ├── Models
+│   │   │   └── Tweet.swift
+│   │   ├── Services
+│   │   ├── ViewModels
+│   │   │   ├── CreateTweetViewModel.swift
+│   │   │   ├── FeedViewModel.swift
+│   │   │   └── TweetCellViewModel.swift
+│   │   └── Views
+│   │       ├── FeedView.swift
+│   │       └── TweetCellView.swift
+│   ├── Main
+│   │   └── Views
+│   │       ├── CreateTweetView.swift
+│   │       ├── Home.swift
+│   │       ├── MainView.swift
+│   │       ├── MultilineTextField.swift
+│   │       ├── SettingsView.swift
+│   │       ├── SlideMenu.swift
+│   │       └── TopBar.swift
+│   ├── Messages
+│   │   ├── MessageCell.swift
+│   │   └── MessagesView.swift
+│   ├── Notifications
+│   │   ├── Models
+│   │   │   └── Notification.swift
+│   │   ├── Services
+│   │   ├── ViewModels
+│   │   │   └── NotificationsViewModel.swift
+│   │   └── Views
+│   │       ├── NotificationCell.swift
+│   │       └── NotificationsView.swift
+│   ├── Profile
+│   │   ├── Services
+│   │   ├── ViewModels
+│   │   │   ├── EditProfileViewModel.swift
+│   │   │   └── ProfileViewModel.swift
+│   │   └── Views
+│   │       ├── BlurView.swift
+│   │       ├── CustomProfileTextField.swift
+│   │       ├── EditProfileView.swift
+│   │       └── ProfileView.swift
+│   └── Search
+│       ├── Services
+│       ├── ViewModels
+│       │   └── SearchViewModel.swift
+│       └── Views
+│           ├── SearchBar.swift
+│           ├── SearchCell.swift
+│           └── SearchView.swift
+├── Resources
+│   ├── File.midi
+│   ├── File.xml
+│   ├── Localization
+│   │   ├── Chinese.strings
+│   │   └── English.strings
+│   ├── Media.xcassets
+│   │   ├── AppIcon.appiconset
+│   │   │   └── Contents.json
+│   │   ├── BG.colorset
+│   │   │   └── Contents.json
+│   │   ├── Contents.json
+│   │   ├── GoogleLogo.imageset
+│   │   │   ├── Contents.json
+│   │   │   └── GoogleLogo.svg
+│   │   ├── SSC_banner.imageset
+│   │   │   ├── Contents.json
+│   │   │   └── SSC_banner.jpg
+│   │   ├── TweetImage.imageset
+│   │   │   ├── Contents.json
+│   │   │   └── Rectangle.png
+│   │   └── X.imageset
+│   │       ├── Contents.json
+│   │       └── X.svg
+│   └── Resources.swift
+└── Tests
+    ├── UITests
+    │   └── AuthUITests.swift
+    └── UnitTests
+        ├── AuthTests.swift
+        └── NetworkTests.swift
