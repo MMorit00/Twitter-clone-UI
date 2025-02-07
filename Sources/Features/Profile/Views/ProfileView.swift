@@ -365,14 +365,14 @@ struct TweetListView: View {
     var tweets: [Tweet]
     var viewModel: ProfileViewModel
     @Environment(\.diContainer) private var container
-    
+    @EnvironmentObject private var authViewModel: AuthState 
     var body: some View {
         VStack(spacing: 18) {
             ForEach(tweets) { tweet in
                 TweetCellView(
                     viewModel: TweetCellViewModel(
                         tweet: tweet,
-                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
+                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)), currentUserId: authViewModel.currentUser?.id ?? ""
                     )
                 )
                 Divider()

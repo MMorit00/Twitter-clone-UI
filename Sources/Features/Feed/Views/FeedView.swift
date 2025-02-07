@@ -1,13 +1,14 @@
 import SwiftUI
 
-
 struct FeedView: View {
     @ObserveInjection var inject
     @Environment(\.diContainer) private var container
     @StateObject private var viewModel: FeedViewModel
+    @EnvironmentObject private var authViewModel: AuthState
 
     init(container: DIContainer) {
-        let tweetService: TweetServiceProtocol = container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
+        let tweetService: TweetServiceProtocol = container.resolve(.tweetService)
+            ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
         _viewModel = StateObject(wrappedValue: FeedViewModel(tweetService: tweetService))
     }
 
@@ -18,7 +19,9 @@ struct FeedView: View {
                     TweetCellView(
                         viewModel: TweetCellViewModel(
                             tweet: tweet,
-                            tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
+                            tweetService: container.resolve(.tweetService)
+                                ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
+                            currentUserId: authViewModel.currentUser?.id ?? "",
                             onTweetUpdated: { updatedTweet in
                                 viewModel.updateTweet(updatedTweet)
                             }

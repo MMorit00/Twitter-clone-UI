@@ -1,33 +1,27 @@
 import Foundation
-import SwiftUI
 
 struct Tweet: Identifiable, Decodable, Equatable {
-    // MongoDB的_id字段
+    // MongoDB 的 _id 字段
     let _id: String
     let text: String
     let userId: String
+    /// 用户昵称，如为空则显示默认值
     let username: String
+    /// 用户真实姓名，如为空则显示默认值
     let user: String
 
-    // 可选字段,后续功能预留
+    // 可选字段，后续预留扩展（例如是否带图片）
     var image: Bool?
+    /// 点赞列表：存储点赞的用户 id 数组
     var likes: [String]?
-    var didLike: Bool? = false // 添加点赞状态标记
 
-    // 满足Identifiable协议
+    // 满足 Identifiable 协议
     var id: String {
         _id
     }
 
-    // 处理JSON字段映射
     enum CodingKeys: String, CodingKey {
-        case _id
-        case text
-        case userId
-        case username
-        case user
-        case image
-        case likes
+        case _id, text, userId, username, user, image, likes
     }
 
     init(from decoder: Decoder) throws {
@@ -35,19 +29,19 @@ struct Tweet: Identifiable, Decodable, Equatable {
 
         _id = try container.decode(String.self, forKey: ._id)
         text = try container.decode(String.self, forKey: .text)
-
-        // 处理嵌套的用户信息
-        if let userId = try? container.decode([String: String].self, forKey: .userId) {
-            self.userId = userId["_id"] ?? ""
-            user = userId["name"] ?? ""
-            username = userId["username"] ?? ""
+        
+        // 如果 userId 是嵌套对象，则解析其中的用户信息
+        if let userInfo = try? container.decode([String: String].self, forKey: .userId) {
+            userId = userInfo["_id"] ?? ""
+            user = userInfo["name"] ?? ""
+            username = userInfo["username"] ?? ""
         } else {
-            // 兼容直接字符串形式的 userId
+            // 否则直接解码，并对 user 与 username 采用 decodeIfPresent，若缺失则提供默认值
             userId = try container.decode(String.self, forKey: .userId)
-            user = try container.decode(String.self, forKey: .user)
-            username = try container.decode(String.self, forKey: .username)
+            user = try container.decodeIfPresent(String.self, forKey: .user) ?? ""
+            username = try container.decodeIfPresent(String.self, forKey: .username) ?? ""
         }
-
+        
         image = try? container.decode(Bool.self, forKey: .image)
         likes = try? container.decode([String].self, forKey: .likes)
     }

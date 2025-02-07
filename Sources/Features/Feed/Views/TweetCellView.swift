@@ -1,5 +1,5 @@
-import SwiftUI
 import Kingfisher
+import SwiftUI
 
 struct TweetCellView: View {
     @ObserveInjection var inject
@@ -8,6 +8,7 @@ struct TweetCellView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // 如果点赞数大于 0，则显示点赞数
             if viewModel.likesCount > 0 {
                 HStack(spacing: 8) {
                     Image(systemName: "heart.fill")
@@ -18,16 +19,16 @@ struct TweetCellView: View {
                 }
                 .padding(.trailing, 16)
             }
-            
+
             HStack(alignment: .top, spacing: 12) {
-                // 头像部分：点击头像跳转到对应用户的个人主页
-              NavigationLink {
-                  ProfileView(userId: viewModel.tweet.userId, diContainer: container)
-              } label: {
-                  avatarView
-              }
-                
-                // 推文内容
+                // 头像区域：点击跳转到对应用户的个人主页
+                NavigationLink {
+                    ProfileView(userId: viewModel.tweet.userId, diContainer: container)
+                } label: {
+                    avatarView
+                }
+
+                // 推文内容区域
                 VStack(alignment: .leading, spacing: 4) {
                     // 用户信息
                     HStack {
@@ -37,7 +38,7 @@ struct TweetCellView: View {
                             .foregroundColor(.gray)
                         Text("·")
                             .foregroundColor(.gray)
-                        // TODO: 添加时间格式化显示
+                        // 目前固定显示时间，后续可根据需求格式化
                         Text("11h")
                             .foregroundColor(.gray)
                     }
@@ -49,7 +50,7 @@ struct TweetCellView: View {
                         .frame(maxHeight: 100)
                         .lineSpacing(4)
 
-                    // Tweet Image (if exists)
+                    // 推文图片（如果存在）
                     if viewModel.tweet.image == true {
                         GeometryReader { proxy in
                             KFImage(URL(string: "http://localhost:3000/tweets/\(viewModel.tweet.id)/image"))
@@ -62,17 +63,21 @@ struct TweetCellView: View {
                         .zIndex(0)
                     }
 
-                    // 互动按钮
+                    // 互动按钮区域
                     HStack(spacing: 40) {
                         InteractionButton(image: "message", count: 0)
                         InteractionButton(image: "arrow.2.squarepath", count: 0)
 
                         Button(action: {
-                            viewModel.likeTweet()
+                            if viewModel.isLiked {
+                                viewModel.unlikeTweet()
+                            } else {
+                                viewModel.likeTweet()
+                            }
                         }) {
                             HStack(spacing: 4) {
-                                Image(systemName: viewModel.tweet.didLike! ? "heart.fill" : "heart")
-                                    .foregroundColor(viewModel.tweet.didLike! ? .red : .gray)
+                                Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")
+                                    .foregroundColor(viewModel.isLiked ? .red : .gray)
                                 if let likes = viewModel.tweet.likes {
                                     Text("\(likes.count)")
                                         .font(.system(size: 12))
@@ -96,30 +101,23 @@ struct TweetCellView: View {
         .contentShape(Rectangle())
         .enableInjection()
     }
-    
+
     // 抽取的头像视图
     private var avatarView: some View {
-        Group {
-            if viewModel.isLoading {
-                ProgressView()
+        KFImage(viewModel.getUserAvatarURL())
+            .placeholder {
+                Circle()
+                    .fill(Color.gray)
                     .frame(width: 44, height: 44)
-            } else {
-                KFImage(viewModel.getUserAvatarURL())
-                    .placeholder {
-                        Circle()
-                            .fill(Color.gray)
-                            .frame(width: 44, height: 44)
-                    }
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 44, height: 44)
-                    .clipShape(Circle())
             }
-        }
+            .resizable()
+            .scaledToFill()
+            .frame(width: 44, height: 44)
+            .clipShape(Circle())
     }
 }
 
-// MARK: - 子视图
+// MARK: - 子视图：互动按钮
 
 private struct InteractionButton: View {
     let image: String
