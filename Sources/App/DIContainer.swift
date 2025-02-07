@@ -1,5 +1,6 @@
 import Foundation
-import SwiftUI 
+import SwiftUI
+
 final class DIContainer {
     private var dependencies: [String: Any] = [:]
     
@@ -50,12 +51,16 @@ final class DIContainer {
         container.register(apiClient, type: .apiClient)
         
         // 配置 AuthService
-        let authService = AuthService(apiClient: apiClient)
+      let authService = AuthService1(apiClient: apiClient) // 示例调用，实际请使用正确构造函数
         container.register(authService, type: .authService)
         
         // 配置 TweetService
         let tweetService = TweetService(apiClient: apiClient)
         container.register(tweetService, type: .tweetService)
+        
+        // 配置 ProfileService
+        let profileService = ProfileService(apiClient: apiClient)
+        container.register(profileService, type: .profileService)
         
         return container
     }

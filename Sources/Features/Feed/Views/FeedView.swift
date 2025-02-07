@@ -1,16 +1,19 @@
 import SwiftUI
 
+
 struct FeedView: View {
-    // 添加热重载支持
     @ObserveInjection var inject
-    @EnvironmentObject private var authViewModel: AuthViewModel
-    // 添加 ViewModel
-    @StateObject var viewModel = FeedViewModel()
+    @Environment(\.diContainer) private var container
+    @StateObject private var viewModel: FeedViewModel
+
+    init(container: DIContainer) {
+        let tweetService: TweetServiceProtocol = container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
+        _viewModel = StateObject(wrappedValue: FeedViewModel(tweetService: tweetService))
+    }
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
-                // 使用实际的tweets数据
+            LazyVStack(spacing: 16) {
                 ForEach(viewModel.tweets) { tweet in
                     TweetCellView(
                         viewModel: TweetCellViewModel(
@@ -24,10 +27,18 @@ struct FeedView: View {
                     .padding(.horizontal)
                     Divider()
                 }
-            } 
+            }
         }
-        .refreshable { // 添加下拉刷新
-            viewModel.refresh()
+        .refreshable {
+            viewModel.fetchTweets()
+        }
+        .onAppear {
+            viewModel.fetchTweets()
+        }
+        .overlay {
+            if viewModel.isLoading {
+                ProgressView()
+            }
         }
         .enableInjection()
     }

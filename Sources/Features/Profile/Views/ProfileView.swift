@@ -1,4 +1,22 @@
-// 添加在文件顶部
+//
+//  ProfileView.swift
+//  twitter-clone (iOS)
+//  Created by cem on 7/31/21.
+//
+
+import SwiftUI
+import Kingfisher
+
+// MARK: - BlurView 实现
+struct BlurView: UIViewRepresentable {
+    var style: UIBlurEffect.Style = .light
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        UIVisualEffectView(effect: UIBlurEffect(style: style))
+    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) { }
+}
+
+// MARK: - PreferenceKey 用于传递滚动偏移
 struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -6,376 +24,361 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
     }
 }
 
-// 添加在文件顶部
-struct TabBarOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
-import SwiftUI
-import Kingfisher
+// MARK: - ProfileView 主界面
 struct ProfileView: View {
-    // MARK: - Properties
-
     @StateObject private var viewModel: ProfileViewModel
-    @ObserveInjection var inject
-    @State var offset: CGFloat = 0 // 监测最顶端 Banner 的滚动偏移
-    @State var titleOffset: CGFloat = 0 // 监测 Profile Data 或标题区域的滚动偏移
-    @State var tabBarOffset: CGFloat = 0 // 监测 TabBar 的滚动偏移
-    @State private var showEditProfile = false // 添加导航状态
-    @EnvironmentObject private var authViewModel: AuthViewModel
-    @State var currentTab = "Tweets"
+    var isCurrentUser: Bool { viewModel.isCurrentUser }
+    
+    // For Dark Mode Adoption
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.diContainer) private var diContainer: DIContainer
 
-    // 初始化方法
-    init(userId: String? = nil) {
-        _viewModel = StateObject(wrappedValue: ProfileViewModel(userId: userId))
+    @State var currentTab = "Tweets"
+    
+    // For Smooth Slide Animation...
+    @Namespace var animation
+    @State var offset: CGFloat = 0            // 记录 Header 的滚动偏移（由 PreferenceKey 更新）
+    @State var titleOffset: CGFloat = 0         // 用于计算标题上移量
+    @State var tabBarOffset: CGFloat = 0
+
+    // 头像及其它状态
+    @State private var selectedImage: UIImage?
+    @State var profileImage: Image?
+    @State var imagePickerRepresented = false
+    @State var editProfileShow = false
+
+    @State var width = UIScreen.main.bounds.width
+    
+    // 初始化：若 userId 为 nil，则显示当前用户；否则显示指定用户的信息
+    init(userId: String? = nil, diContainer: DIContainer) {
+        guard let service: ProfileServiceProtocol = diContainer.resolve(.profileService) else {
+            fatalError("ProfileService 未在 DIContainer 中注册")
+        }
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(profileService: service, userId: userId))
     }
-
-    // MARK: - Body
-
+    
     var body: some View {
-        Group {
-            if let error = viewModel.error {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.red)
-                    Text(error.localizedDescription)
-                        .multilineTextAlignment(.center)
-                        .padding()
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 15) {
+                // Header (Banner) View
+                GeometryReader { proxy -> AnyView in
+                    // 使用命名坐标空间 "scroll" 得到准确的偏移
+                    let minY = proxy.frame(in: .named("scroll")).minY
+                    return AnyView(
+                        ZStack {
+                            // Banner 图片：高度为 180，下拉时高度增加
+                            Image("SSC_banner")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: getRect().width, height: minY > 0 ? 180 + minY : 180)
+                                .clipped()
+                            
+                            // 模糊效果：从 20 点开始逐渐出现，到 80 点全模糊
+                            BlurView(style: .light)
+                                .opacity(blurViewOpacity())
+                            
+                            // 标题文本：显示用户名和 "150 Tweets"
+                            VStack(spacing: 5) {
+                                Text(viewModel.user?.name ?? "")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                Text("150 Tweets")
+                                    .foregroundColor(.white)
+                            }
+                            // 初始偏移为 120，向上滚动时上移一定距离（使用 textOffset）
+                            .offset(y: 120 - getTitleTextOffset())
+                            // 当向上滚动超过 80 点时，文本开始淡出
+                            .opacity(max(1 - ((max(-offset, 0) - 80) / 70), 0))
+                        }
+                        .frame(height: minY > 0 ? 180 + minY : 180)
+                        // Sticky & Stretchy 效果
+                        .offset(y: minY > 0 ? -minY : (-minY < 80 ? 0 : -minY - 80))
+                        // 通过 Preference 将 minY 传递出去
+                        .background(Color.clear.preference(key: ScrollOffsetPreferenceKey.self, value: minY))
+                    )
                 }
-            } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 15) {
-                        // MARK: - 1) Banner + Title
-
-                        GeometryReader { proxy -> AnyView in
-                            let minY = proxy.frame(in: .global).minY
-
-                            return AnyView(
-                                ZStack {
-                                    // 背景 Banner
-                                    Image("SC_banner")
+                .frame(height: 180)
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                    self.offset = value
+                    // 这里直接使用 -value 作为向上滚动距离（正值）
+                    self.titleOffset = max(-value, 0)
+                }
+                .zIndex(1)
+                
+                // Profile Image 及其它信息部分
+                VStack {
+                    HStack {
+                        VStack {
+                            if profileImage == nil {
+                                Button {
+                                    self.imagePickerRepresented.toggle()
+                                } label: {
+                                    KFImage(viewModel.getAvatarURL())
+                                        .placeholder {
+                                            Image("blankpp")
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 75, height: 75)
+                                                .clipShape(Circle())
+                                        }
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
-                                        .frame(
-                                            width: getRect().width,
-                                            height: minY > 0 ? 180 + minY : 180
-                                        )
-                                        .cornerRadius(0)
-                                        .offset(y: minY > 0 ? -minY : 0)
-
-                                    // Blur
-                                    BlurView()
-                                        .opacity(blurViewOpacity())
-
-                                    // Title
-                                    VStack(spacing: 5) {
-                                        Text(viewModel.user.name)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                        Text("\(viewModel.user.followers.count) Followers")
-                                            .foregroundColor(.white)
-                                    }
-                                    .offset(y: 120)
-                                    .offset(y: titleOffset > 100 ? 0 : -getTitleTextOffset())
-                                    .opacity(titleOffset < 100 ? 1 : 0)
+                                        .frame(width: 75, height: 75)
+                                        .clipShape(Circle())
+                                        .padding(8)
+                                        .background(colorScheme == .dark ? Color.black : Color.white)
+                                        .clipShape(Circle())
+                                        // 根据滚动偏移调整头像垂直位置与缩放
+                                        .offset(y: offset < 0 ? getAvatarOffset() : -20)
+                                        .scaleEffect(getAvatarScale())
                                 }
-                                .clipped()
-                                .frame(height: minY > 0 ? 180 + minY : nil)
-                                .offset(y: minY > 0 ? -minY : -minY < 80 ? 0 : -minY - 80)
-                                .onAppear {
-                                    DispatchQueue.main.async {
-                                        offset = minY
-                                    }
-                                }
-                            )
-                        }
-
-                        .frame(height: 180)
-                        .zIndex(1)
-
-                        // MARK: - 2) Profile Image + Profile Info
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                KFImage(viewModel.getAvatarURL())
-                                    .placeholder {
-                                        Image("blankpp")
+                            } else if let image = profileImage {
+                                VStack {
+                                    HStack(alignment: .top) {
+                                        image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
+                                            .frame(width: 75, height: 75)
+                                            .clipShape(Circle())
+                                            .padding(8)
+                                            .background(colorScheme == .dark ? Color.black : Color.white)
+                                            .clipShape(Circle())
+                                            .offset(y: offset < 0 ? getAvatarOffset() : -20)
                                     }
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 75, height: 75)
-                                    .clipShape(Circle())
-                                    .padding(8)
-                                    .background(.white)
-                                    .clipShape(Circle())
-                                    .offset(y: -20)
-
-                                Spacer()
-
-                                // 将按钮包装在 ZStack 中以确保它在最上层
-                                ZStack {
-                                    if viewModel.isCurrentUser {
-                                        Button {
-                                            showEditProfile.toggle()
-                                        } label: {
-                                            Text("Edit Profile")
-                                                .font(.system(size: 14))
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.black)
-                                                .padding(.vertical, 6)
-                                                .padding(.horizontal, 12)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 20)
-                                                        .stroke(Color.gray, lineWidth: 1)
-                                                )
-                                        }
-                                        .zIndex(2) // 确保按钮在最上层
-                                    } else {
-                                        FollowButton()
-                                            .zIndex(2)
+                                    .padding()
+                                    Spacer()
+                                }
+                            }
+                        }
+                        Spacer()
+                        if self.isCurrentUser {
+                            Button(action: {
+                                editProfileShow.toggle()
+                            }, label: {
+                                Text("Edit Profile")
+                                    .foregroundColor(.blue)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal)
+                                    .background(
+                                        Capsule().stroke(Color.blue, lineWidth: 1.5)
+                                    )
+                            })
+                            .onAppear {
+                                KingfisherManager.shared.cache.clearCache()
+                            }
+                            .sheet(isPresented: $editProfileShow, onDismiss: {
+                                KingfisherManager.shared.cache.clearCache()
+                            }, content: {
+                                // EditProfileView(user: $viewModel.user)
+                            })
+                        }
+                    }
+                    .padding(.top, -25)
+                    .padding(.bottom, -10)
+                    
+                    // Profile Data 区域
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(viewModel.user?.name ?? "")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                            Text("@\(viewModel.user?.username ?? "")")
+                                .foregroundColor(.gray)
+                            Text(viewModel.user?.bio ?? "Make education not fail! 4️⃣2️⃣ Founder @TurmaApp soon.. @ProbableApp")
+                            HStack(spacing: 8) {
+                                if let userLocation = viewModel.user?.location, !userLocation.isEmpty {
+                                    HStack(spacing: 2) {
+                                        Image(systemName: "mappin.circle.fill")
+                                            .frame(width: 24, height: 24)
+                                            .foregroundColor(.gray)
+                                        Text(userLocation)
+                                            .foregroundColor(.gray)
+                                            .font(.system(size: 14))
+                                    }
+                                }
+                                if let userWebsite = viewModel.user?.website, !userWebsite.isEmpty {
+                                    HStack(spacing: 2) {
+                                        Image(systemName: "link")
+                                            .frame(width: 24, height: 24)
+                                            .foregroundColor(.gray)
+                                        Text(userWebsite)
+                                            .foregroundColor(Color("twitter"))
+                                            .font(.system(size: 14))
                                     }
                                 }
                             }
-                            .padding(.horizontal)
-                            .contentShape(Rectangle()) // 确保整个区域可以接收点击
-                            .zIndex(2) // 给整个 HStack 一个较高的 zIndex
-
-                            // User Info
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(viewModel.user.name)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-
-                                Text("@\(viewModel.user.username)")
-                                    .font(.subheadline)
+                            HStack(spacing: 5) {
+                                Text("4,560")
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                Text("Followers")
+                                    .foregroundColor(.gray)
+                                Text("680")
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                    .padding(.leading, 10)
+                                Text("Following")
                                     .foregroundColor(.gray)
                             }
-                            .padding(.horizontal)
-
-                            // User Bio & Details
-                            if let bio = viewModel.user.bio, !bio.isEmpty {
-                                Text(bio)
-                                    .font(.subheadline)
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 4)
-                            }
-
-                            // Location & Website
-                            HStack(spacing: 24) {
-                                if let location = viewModel.user.location, !location.isEmpty {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "mappin.circle.fill")
-                                        Text(location)
-                                    }
-                                }
-
-                                if let website = viewModel.user.website, !website.isEmpty {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "link")
-                                        Text(website)
-                                    }
-                                }
-                            }
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal)
-
-                            // Followers Count
-                            HStack(spacing: 24) {
-                                HStack(spacing: 4) {
-                                    Text("\(viewModel.user.following.count)")
-                                        .fontWeight(.bold)
-                                    Text("Following")
-                                        .foregroundColor(.gray)
-                                }
-
-                                HStack(spacing: 4) {
-                                    Text("\(viewModel.user.followers.count)")
-                                        .fontWeight(.bold)
-                                    Text("Followers")
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                            .font(.subheadline)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal)
+                            .padding(.top, 8)
                         }
-                        .zIndex(2) // 确保整个 Profile Info 在正确的层级
-
-                        // MARK: - 3) TabBar (自定义滚动菜单)
-
-                        VStack(spacing: 0) {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 0) {
-                                    TabButton(title: "Tweets", currentTab: $currentTab)
-                                    TabButton(title: "Replies", currentTab: $currentTab)
-                                    TabButton(title: "Media", currentTab: $currentTab)
-                                    TabButton(title: "Likes", currentTab: $currentTab)
-                                }
-                            }
-                            Divider()
-                        }
-                        .padding(.top, 16)
-                        .background(colorScheme == .dark ? Color.black : Color.white)
-                        .offset(y: tabBarOffset < 90 ? -tabBarOffset + 90 : 0)
+                        .padding(.leading, 8)
                         .overlay(
-                            GeometryReader { proxy in
-                                Color.clear
-                                    .preference(key: TabBarOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
-                                    .allowsHitTesting(false)
+                            GeometryReader { proxy -> Color in
+                                let minY = proxy.frame(in: .global).minY
+                                // 此处可以根据需要更新 titleOffset（或其他状态）
+                                DispatchQueue.main.async {
+                                    self.titleOffset = max(-minY, 0)
+                                }
+                                return Color.clear
                             }
-                            .allowsHitTesting(false) // 也要给 GeometryReader 添加
-                            .onPreferenceChange(TabBarOffsetPreferenceKey.self) { value in
-                                self.tabBarOffset = value
-                            }
+                            .frame(width: 0, height: 0),
+                            alignment: .top
                         )
-                        .zIndex(1)
-
-                        // MARK: - 4) Tweets 列表
-
-                        VStack(spacing: 18) {
-                            ForEach(viewModel.tweets) { tweet in
-                                TweetCellView(viewModel: viewModel.getTweetCellViewModel(for: tweet))
-                                Divider()
+                        Spacer()
+                    }
+                    
+                    // 分段菜单
+                    VStack(spacing: 0) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 0) {
+                                TabButton(title: "Tweets", currentTab: $currentTab, animation: animation)
+                                TabButton(title: "Tweets & Likes", currentTab: $currentTab, animation: animation)
+                                TabButton(title: "Media", currentTab: $currentTab, animation: animation)
+                                TabButton(title: "Likes", currentTab: $currentTab, animation: animation)
                             }
                         }
-                        .padding(.top)
+                        Divider()
+                    }
+                    .padding(.top, 30)
+                    .background(colorScheme == .dark ? Color.black : Color.white)
+                    .offset(y: tabBarOffset < 90 ? -tabBarOffset + 90 : 0)
+                    .overlay(
+                        GeometryReader { reader -> Color in
+                            let minY = reader.frame(in: .global).minY
+                            DispatchQueue.main.async {
+                                self.tabBarOffset = minY
+                            }
+                            return Color.clear
+                        }
+                        .frame(width: 0, height: 0),
+                        alignment: .top
+                    )
+                    .zIndex(1)
+                    
+                    // 推文列表
+                    TweetListView(tweets: viewModel.tweets, viewModel: viewModel)
                         .zIndex(0)
-                    }
                 }
+                .padding(.horizontal)
+                .zIndex(-offset > 80 ? 0 : 1)
             }
         }
-//       .onDisappear {
-//            if let currentUserId = authViewModel.currentUser?.id,
-//               currentUserId == viewModel.user.id {
-//                authViewModel.updateCurrentUser(viewModel.user)
-//            }
-//        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { dismiss() }) {
-                    HStack {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.blue)
-                            .padding(8)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .navigationBarBackButtonHidden(true)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .coordinateSpace(name: "scroll")
+        // .toolbarBackground(.hidden, for: .navigationBar)
         .ignoresSafeArea(.all, edges: .top)
-        .enableInjection()
-        // 添加 sheet 导航
-        .sheet(isPresented: $showEditProfile) {
-            if viewModel.isCurrentUser {
-                EditProfileView()
-            }
-        }
     }
-
-    // MARK: - 逻辑与原 UserProfile 保持一致
-
-    // 让 Title View 有一个滑动消失/收起的动画
+    
+    // MARK: - 辅助函数
+    
+    func getRect() -> CGRect {
+        UIScreen.main.bounds
+    }
+    
+    // 头像缩放效果：向上滚动时从 1.0 缩放到 0.8
+    func getAvatarScale() -> CGFloat {
+        let currentOffset = max(-offset, 0)
+        let maxOffset: CGFloat = 80
+        let minScale: CGFloat = 0.8
+        let progress = min(currentOffset / maxOffset, 1)
+        return 1.0 - progress * (1.0 - minScale)
+    }
+    
+    // 头像垂直偏移：向上滚动时最多平移 20 点
+    func getAvatarOffset() -> CGFloat {
+        let currentOffset = max(-offset, 0)
+        let maxOffset: CGFloat = 20
+        let progress = min(currentOffset / 80, 1)
+        return progress * maxOffset
+    }
+    
+    // 标题文本上移：这里采用简单公式：上移量 = (-offset) * 0.5
     func getTitleTextOffset() -> CGFloat {
-        let progress = 20 / titleOffset
-        // 原逻辑：最多移动 60
-        let offset = 60 * (progress > 0 && progress <= 1 ? progress : 1)
-        return offset
+        return max(-offset, 0) * 0.5
     }
-
-    // 头像向上移动
-    func getOffset() -> CGFloat {
-        let progress = (-offset / 80) * 20
-        // 最大上移 20
-        return progress <= 20 ? progress : 20
-    }
-
-    // 头像缩放
-    func getScale() -> CGFloat {
-        let progress = -offset / 80
-        // 1.8 - 1 = 0.8 最小缩放 0.8
-        let scale = 1.8 - (progress < 1.0 ? progress : 1)
-        return scale < 1 ? scale : 1
-    }
-
-    // Banner Blur
+    
+    // 模糊透明度：初始完全清晰，当向上滚动超过 20 点后开始模糊，到 80 点时全模糊
     func blurViewOpacity() -> Double {
-        let progress = -(offset + 80) / 150
-        return Double(-offset > 80 ? progress : 0)
-    }
-
-    // 修改 FollowButton 视图
-    @ViewBuilder
-    private func FollowButton() -> some View {
-        Button(action: {
-            if viewModel.isFollowing {
-                viewModel.unfollow()
-            } else {
-                viewModel.follow()
-            }
-        }) {
-            Text(viewModel.isFollowing ? "Following" : "Follow")
-                .font(.system(size: 14))
-                .fontWeight(.semibold)
-                .foregroundColor(viewModel.isFollowing ? .gray : .white)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
-                .background(
-                    Capsule()
-                        .fill(viewModel.isFollowing ? Color.clear : Color.blue)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.gray, lineWidth: viewModel.isFollowing ? 1 : 0)
-                        )
-                )
-        }
-        .animation(.easeInOut, value: viewModel.isFollowing)
-    }
-}
-
-struct TabButton: View {
-    let title: String
-    @Binding var currentTab: String
-
-    var body: some View {
-        Button {
-            currentTab = title
-        } label: {
-            Text(title)
-                .foregroundColor(currentTab == title ? .blue : .gray)
-                .padding(.horizontal, 16)
-                .frame(height: 44)
-
-            // if currentTab == title {
-            //     Rectangle()
-            //         .fill(Color.blue)
-            //         .frame(height: 2)
-            //         .matchedGeometryEffect(id: "TAB", in: animation)
-            // } else {
-            //     Rectangle()
-            //         .fill(Color.clear)
-            //         .frame(height: 2)
-            // }
+        let currentOffset = max(-offset, 0)
+        let startBlur: CGFloat = 20
+        let fullBlur: CGFloat = 80
+        if currentOffset < startBlur {
+            return 0
+        } else {
+            let progress = min((currentOffset - startBlur) / (fullBlur - startBlur), 1)
+            return Double(progress)
         }
     }
 }
 
-// 获取屏幕大小
 extension View {
     func getRect() -> CGRect {
         UIScreen.main.bounds
+    }
+}
+
+// MARK: - TabButton
+struct TabButton: View {
+    var title: String
+    @Binding var currentTab: String
+    var animation: Namespace.ID
+    
+    var body: some View {
+        Button(action: {
+            withAnimation {
+                currentTab = title
+            }
+        }, label: {
+            LazyVStack(spacing: 12) {
+                Text(title)
+                    .fontWeight(.semibold)
+                    .foregroundColor(currentTab == title ? .blue : .gray)
+                    .padding(.horizontal)
+                if currentTab == title {
+                    Capsule()
+                        .fill(Color.blue)
+                        .frame(height: 1.2)
+                        .matchedGeometryEffect(id: "TAB", in: animation)
+                } else {
+                    Capsule()
+                        .fill(Color.clear)
+                        .frame(height: 1.2)
+                }
+            }
+        })
+    }
+}
+
+// MARK: - TweetListView
+struct TweetListView: View {
+    var tweets: [Tweet]
+    var viewModel: ProfileViewModel
+    @Environment(\.diContainer) private var container
+    
+    var body: some View {
+        VStack(spacing: 18) {
+            ForEach(tweets) { tweet in
+                TweetCellView(
+                    viewModel: TweetCellViewModel(
+                        tweet: tweet,
+                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
+                    )
+                )
+                Divider()
+            }
+        }
+        .padding(.top)
+        .zIndex(0)
     }
 }

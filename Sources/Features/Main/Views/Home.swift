@@ -1,31 +1,33 @@
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject private var viewModel: AuthViewModel
+    @EnvironmentObject private var viewModel: AuthState
     @ObserveInjection var inject
     @Binding var selectedTab: Int
     @State private var showCreateTweetView = false
   @Binding var searchText:String
   @Binding  var isSearching:Bool
-    
+  @Environment(\.diContainer) private var container
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
-                FeedView()
+              FeedView(container: container)
                     .tabItem {
                         Image(systemName: "house")
                         Text("Home")
                     }
                     .tag(0)
 
-                SearchView(searchText: $searchText, isEditing: $isSearching)
+//                SearchView(searchText: $searchText, isEditing: $isSearching)
+              EmptyView()
                     .tabItem {
                         Image(systemName: "magnifyingglass")
                         Text("Search")
                     }
                     .tag(1)
                 
-              NotificationsView(user: viewModel.user!)
+//              NotificationsView(user: viewModel.user!)
+              EmptyView()
                     .tabItem {
                         Image(systemName: "bell")
                         Text("Notifications")

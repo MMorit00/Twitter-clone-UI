@@ -1,10 +1,11 @@
-import Kingfisher
 import SwiftUI
+import Kingfisher
 
 struct TweetCellView: View {
     @ObserveInjection var inject
     @ObservedObject var viewModel: TweetCellViewModel
-    
+    @Environment(\.diContainer) private var container
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if viewModel.likesCount > 0 {
@@ -19,29 +20,13 @@ struct TweetCellView: View {
             }
             
             HStack(alignment: .top, spacing: 12) {
-                // 头像部分
-                NavigationLink {
-                    if let user = viewModel.user {
-                        ProfileView(userId: user.id)
-                    }
-                } label: {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(width: 44, height: 44)
-                    } else {
-                        KFImage(viewModel.getUserAvatarURL())
-                            .placeholder {
-                                Circle()
-                                    .fill(.gray)
-                                    .frame(width: 44, height: 44)
-                            }
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
-                    }
-                }
-
+                // 头像部分：点击头像跳转到对应用户的个人主页
+              NavigationLink {
+                  ProfileView(userId: viewModel.tweet.userId, diContainer: container)
+              } label: {
+                  avatarView
+              }
+                
                 // 推文内容
                 VStack(alignment: .leading, spacing: 4) {
                     // 用户信息
@@ -86,8 +71,8 @@ struct TweetCellView: View {
                             viewModel.likeTweet()
                         }) {
                             HStack(spacing: 4) {
-                                Image(systemName: didLike ? "heart.fill" : "heart")
-                                    .foregroundColor(didLike ? .red : .gray)
+                                Image(systemName: viewModel.tweet.didLike! ? "heart.fill" : "heart")
+                                    .foregroundColor(viewModel.tweet.didLike! ? .red : .gray)
                                 if let likes = viewModel.tweet.likes {
                                     Text("\(likes.count)")
                                         .font(.system(size: 12))
@@ -111,6 +96,27 @@ struct TweetCellView: View {
         .contentShape(Rectangle())
         .enableInjection()
     }
+    
+    // 抽取的头像视图
+    private var avatarView: some View {
+        Group {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(width: 44, height: 44)
+            } else {
+                KFImage(viewModel.getUserAvatarURL())
+                    .placeholder {
+                        Circle()
+                            .fill(Color.gray)
+                            .frame(width: 44, height: 44)
+                    }
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 44, height: 44)
+                    .clipShape(Circle())
+            }
+        }
+    }
 }
 
 // MARK: - 子视图
@@ -131,5 +137,3 @@ private struct InteractionButton: View {
         }
     }
 }
-
-// MARK: - Preview

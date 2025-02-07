@@ -3,12 +3,8 @@ import SwiftUI
 
 struct EditProfileView: View {
     @Environment(\.presentationMode) var mode
-    @ObserveInjection var inject
-    @EnvironmentObject private var authViewModel: AuthViewModel
-
-    // 移除 user binding
-    // @Binding var user: User
-    @StateObject private var viewModel: EditProfileViewModel
+    @EnvironmentObject private var authState: AuthState // 若需要访问全局登录状态
+    @ObservedObject var viewModel: ProfileViewModel // 使用同一个 ProfileViewModel
 
     // 用户输入的状态变量
     @State private var name: String = ""
@@ -20,27 +16,27 @@ struct EditProfileView: View {
     @State private var profileImage: UIImage?
     @State private var bannerImage: UIImage?
 
-    // 添加图片选择相关状态
+    // 图片选择器相关状态
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
     @State private var imagePickerType: ImagePickerType = .profile
 
-    // 定义图片选择类型
     enum ImagePickerType {
         case banner
         case profile
     }
 
-    // 修改初始化方法
-    init() {
-        // 使用AuthViewModel.shared.user初始化
-        let user = AuthViewModel.shared.user!
-        _viewModel = StateObject(wrappedValue: EditProfileViewModel(user: user))
-        // 初始化各个字段
-        _name = State(initialValue: user.name)
-        _location = State(initialValue: user.location ?? "")
-        _bio = State(initialValue: user.bio ?? "")
-        _website = State(initialValue: user.website ?? "")
+    // 初始化，从 ProfileViewModel.user 中读取现有数据
+    init(viewModel: ProfileViewModel) {
+        _viewModel = ObservedObject(wrappedValue: viewModel)
+
+        // 若 user 还没加载成功，可以在这里做安全处理
+        if let user = viewModel.user {
+            _name = State(initialValue: user.name)
+            _location = State(initialValue: user.location ?? "")
+            _bio = State(initialValue: user.bio ?? "")
+            _website = State(initialValue: user.website ?? "")
+        }
     }
 
     var body: some View {
@@ -204,7 +200,7 @@ struct EditProfileView: View {
                 .padding(.top, 50)
             }
 
-            // 独立覆盖的导航栏
+            // 顶部导航栏
             VStack {
                 HStack {
                     Button("Cancel") {
@@ -212,27 +208,28 @@ struct EditProfileView: View {
                     }
                     Spacer()
                     Button(action: {
-                        viewModel.save(
-                            name: name,
-                            bio: bio,
-                            website: website,
-                            location: location
-                        )
+                        Task {
+                            await viewModel.updateProfile(data: [
+                                "name": name,
+                                "bio": bio,
+                                "website": website,
+                                "location": location,
+                            ])
+                        }
                     }) {
                         Text("Save")
                             .bold()
-                            .disabled(viewModel.isSaving)
+                            .disabled(viewModel.isLoading) // or some other condition
                     }
                 }
                 .padding()
                 .background(Material.ultraThin)
                 .compositingGroup()
-                // .shadow(radius: 2)
 
                 Spacer()
             }
 
-            // ImagePicker 保持原样
+            // ImagePicker 弹窗
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(image: $selectedImage)
                     .presentationDetents([.large])
@@ -240,34 +237,42 @@ struct EditProfileView: View {
                     .onDisappear {
                         guard let image = selectedImage else { return }
 
+                        // 将选中的 UIImage 转成 jpegData
+                        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+
                         switch imagePickerType {
                         case .profile:
-                            viewModel.profileImage = image // 更新 ViewModel
-                            profileImage = image // 更新 View 状态
+                            // 上传头像
+                            Task {
+                                await viewModel.uploadAvatar(imageData: data)
+                            }
+                            profileImage = image // 更新界面预览
+
                         case .banner:
-                            viewModel.bannerImage = image // 更新 ViewModel
-                            bannerImage = image // 更新 View 状态
+                            // 上传 banner
+                            Task {
+                                await viewModel.uploadBanner(imageData: data)
+                            }
+                            bannerImage = image // 更新界面预览
                         }
 
-                        // 清除选中的图片
                         selectedImage = nil
                     }
             }
         }
+        // 当上传或更新完成后，自动关闭
+        .onReceive(viewModel.$shouldRefreshImage) { _ in
+            // 如果需要在图片上传完立即退出，可在这里进行 dismiss
+//            mode.dismss()
+        }
+        // 如果希望等待一切保存都完成再退出，可另加逻辑
+        .onReceive(viewModel.$user) { updatedUser in
+            // 可选：若 updatedUser != nil，说明资料更新完毕
+//            updatedUser != nil
+        }
         .onAppear {
-            // 清除 Kingfisher 缓存
+            // 可选：清除缓存或其他逻辑
             KingfisherManager.shared.cache.clearCache()
         }
-        .onReceive(viewModel.$uploadComplete) { complete in
-            if complete {
-           
-                // 确保在主线程中关闭视图
-                DispatchQueue.main.async {
-                    mode.wrappedValue.dismiss()
-                }
-            }
-        }
-
-        .enableInjection()
     }
 }

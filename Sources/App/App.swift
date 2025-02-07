@@ -11,8 +11,7 @@ import SwiftUI
 
 @main
 struct TwitterCloneApp: App {
-    // 创建容器
-    @StateObject private var authViewModel = AuthViewModel.shared
+    
     let container: DIContainer = {
         let container = DIContainer.defaultContainer()
         

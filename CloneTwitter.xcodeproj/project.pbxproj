@@ -63,6 +63,8 @@
 		B609707D2D5385890032F4CF /* AuthState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B609707C2D5385890032F4CF /* AuthState.swift */; };
 		B60970812D539DB20032F4CF /* AuthStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B609707F2D539D910032F4CF /* AuthStateTests.swift */; };
 		B60970832D53A03E0032F4CF /* TweetService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970822D53A03E0032F4CF /* TweetService.swift */; };
+		B60970852D54514F0032F4CF /* ProfileEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970842D54514F0032F4CF /* ProfileEndpoint.swift */; };
+		B60970872D5451E00032F4CF /* ProfileServiceProtocol..swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970862D5451E00032F4CF /* ProfileServiceProtocol..swift */; };
 		B8A02EBDEE432D9F43AE0049 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7352DB6F1062A3887691EE77 /* RegisterView.swift */; };
 		B9ABDC386C8BDBE0CBBC9CED /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E3914C4587AB9AE684B803 /* FeedViewModel.swift */; };
 		C68B29F427476AD1D169FD1C /* CreateTweetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEAC94C4DC0E8ECCA2BC71D /* CreateTweetView.swift */; };
@@ -139,6 +141,8 @@
 		B609707C2D5385890032F4CF /* AuthState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthState.swift; sourceTree = "<group>"; };
 		B609707F2D539D910032F4CF /* AuthStateTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthStateTests.swift; sourceTree = "<group>"; };
 		B60970822D53A03E0032F4CF /* TweetService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TweetService.swift; sourceTree = "<group>"; };
+		B60970842D54514F0032F4CF /* ProfileEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEndpoint.swift; sourceTree = "<group>"; };
+		B60970862D5451E00032F4CF /* ProfileServiceProtocol..swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileServiceProtocol..swift; sourceTree = "<group>"; };
 		BBCC4AAE9275D72F7B097B96 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		BCD7898679A5681A2D7F6645 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		C2AECAD09846AD417141E19A /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
@@ -286,7 +290,6 @@
 		69E5350703375ED09FF8E340 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				3EEAC94C4DC0E8ECCA2BC71D /* CreateTweetView.swift */,
 				E340CE3CF26FFEAB4FAEA1EF /* Home.swift */,
 				DFEE166D9407A99E451AF8FC /* MainView.swift */,
 				A2B85D4169C23AC0BD82EAF8 /* MultilineTextField.swift */,
@@ -355,6 +358,7 @@
 		8297CC9C54CEABE5708E57AC /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				3EEAC94C4DC0E8ECCA2BC71D /* CreateTweetView.swift */,
 				948E51776C95105DFE7544F7 /* FeedView.swift */,
 				D1C453EC586A0665020D9A19 /* TweetCellView.swift */,
 			);
@@ -459,6 +463,7 @@
 		A8B99AEB44D1A840C970A053 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B60970862D5451E00032F4CF /* ProfileServiceProtocol..swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -546,6 +551,7 @@
 			children = (
 				9EE7532C0F39B842F91C343E /* APIClient.swift */,
 				D056A8A38E30020CE919701F /* APIEndpoint.swift */,
+				B60970842D54514F0032F4CF /* ProfileEndpoint.swift */,
 				68D8F78BD2DBA4CEA50A7489 /* HTTPMethod.swift */,
 				26C46E8C249AAB8C57C0E9D0 /* NetworkError.swift */,
 			);
@@ -760,6 +766,7 @@
 				B60970832D53A03E0032F4CF /* TweetService.swift in Sources */,
 				5359609EC63BA2917D3F3721 /* ContentView.swift in Sources */,
 				C68B29F427476AD1D169FD1C /* CreateTweetView.swift in Sources */,
+				B60970872D5451E00032F4CF /* ProfileServiceProtocol..swift in Sources */,
 				B609707B2D53794B0032F4CF /* App.swift in Sources */,
 				691AB3F11ABBB35A7E8D6754 /* CreateTweetViewModel.swift in Sources */,
 				A5D0225C35E129B2A6A34178 /* CustomAuthTextField.swift in Sources */,
@@ -803,6 +810,7 @@
 				1D21FAB63AFC5E606C0C2A64 /* TweetCellView.swift in Sources */,
 				B42744FB6E3E6E8F74A13B88 /* TweetCellViewModel.swift in Sources */,
 				8E0A851518B6898ECB034D49 /* User.swift in Sources */,
+				B60970852D54514F0032F4CF /* ProfileEndpoint.swift in Sources */,
 				B37C4FECC45B4A754196001D /* UserDefaultsStore.swift in Sources */,
 				39E5589799AE479A0961C12E /* WelcomeView.swift in Sources */,
 				EAC89F42A818DC9B5A14490D /* authService.swift in Sources */,

@@ -7,11 +7,11 @@ struct TopBar: View {
     @Binding var showMenu: Bool
     @Binding var offset: CGFloat
     @Binding var selectedTab: Int // 添加这行
-    @EnvironmentObject private var authViewModel: AuthViewModel
+    @EnvironmentObject private var authViewModel: AuthState
   @Binding var searchText: String
   @Binding var isSearching: Bool
     private var avatarURL: URL? {
-        guard let user = authViewModel.user else {
+        guard let user = authViewModel.currentUser else {
             return nil
         }
         return URL(string: "http://localhost:3000/users/\(user.id)/avatar")

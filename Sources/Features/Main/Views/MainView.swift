@@ -6,7 +6,8 @@ struct MainView: View {
     @State private var showProfile = false
     @State private var offset: CGFloat = 0
     @State private var selectedTab = 0 // 添加这行
-    @EnvironmentObject private var viewModel: AuthViewModel
+    @EnvironmentObject private var viewModel: AuthState
+  @Environment(\.diContainer) private var diContainer: DIContainer 
 
     // 侧边菜单宽度（为了方便修改）
     private var menuWidth: CGFloat {
@@ -49,13 +50,13 @@ struct MainView: View {
                     .allowsHitTesting(showMenu)
 
                 // 2. 侧边菜单视图
-                SlideMenu(onProfileTap: {
-                    showProfile = true
-                })
-                .frame(width: menuWidth)
-                .background(Color.white)
-                .offset(x: offset - menuWidth)
-                .zIndex(2) // 添加最高层级
+//                SlideMenu(onProfileTap: {
+//                    showProfile = true
+//                })
+//                .frame(width: menuWidth)
+//                .background(Color.white)
+//                .offset(x: offset - menuWidth)
+//                .zIndex(2) // 添加最高层级
 
                 // 3. 用于菜单拖拽手势的透明层
                 if showMenu {
@@ -77,7 +78,7 @@ struct MainView: View {
                 }
             }
             .navigationDestination(isPresented: $showProfile) {
-                ProfileView()
+                ProfileView(userId: nil, diContainer: diContainer)
             }
             .toolbar(.hidden, for: .tabBar) // 只隐藏tabBar
         }
