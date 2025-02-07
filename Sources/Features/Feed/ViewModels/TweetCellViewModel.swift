@@ -3,24 +3,24 @@ import SwiftUI
 @MainActor
 final class TweetCellViewModel: ObservableObject {
     @Published var tweet: Tweet
-    /// 用于防止重复点击点赞/取消点赞时的 loading 状态
     @Published var isLikeActionLoading: Bool = false
     @Published var error: Error?
     
     private let tweetService: TweetServiceProtocol
-    /// 当前登录用户的 id，从认证模块传入
+    private let notificationService: NotificationServiceProtocol
     private let currentUserId: String
-    /// 当 tweet 被更新时回调（例如同步 FeedView 中的 tweet）
     private let onTweetUpdated: ((Tweet) -> Void)?
     
     init(
         tweet: Tweet,
         tweetService: TweetServiceProtocol,
+        notificationService: NotificationServiceProtocol,
         currentUserId: String,
         onTweetUpdated: ((Tweet) -> Void)? = nil
     ) {
         self.tweet = tweet
         self.tweetService = tweetService
+        self.notificationService = notificationService
         self.currentUserId = currentUserId
         self.onTweetUpdated = onTweetUpdated
     }
@@ -38,13 +38,12 @@ final class TweetCellViewModel: ObservableObject {
     /// 点赞操作（乐观更新）
     func likeTweet() {
         guard !isLikeActionLoading else { return }
-        // 如果已经点赞则切换为取消点赞
         if isLiked {
             unlikeTweet()
             return
         }
         
-        // 乐观更新：将当前用户 id 添加到 likes 数组中
+        // 乐观更新点赞状态
         if tweet.likes == nil {
             tweet.likes = [currentUserId]
         } else if !(tweet.likes!.contains(currentUserId)) {
@@ -55,13 +54,21 @@ final class TweetCellViewModel: ObservableObject {
         
         Task {
             do {
+                // 发送点赞请求
                 let updatedTweet = try await tweetService.likeTweet(tweetId: tweet.id)
-                // 使用服务端返回数据确保状态一致
                 self.tweet = updatedTweet
                 onTweetUpdated?(updatedTweet)
+                
+                // 发送通知
+                try await notificationService.createNotification(
+                    username: tweet.username,
+                    receiverId: tweet.userId,
+                    type: .like,
+                    postText: tweet.text
+                )
             } catch {
                 print("点赞失败: \(error)")
-                // 回滚乐观更新
+                // 回滚点赞状态
                 if var likes = tweet.likes {
                     likes.removeAll { $0 == currentUserId }
                     tweet.likes = likes

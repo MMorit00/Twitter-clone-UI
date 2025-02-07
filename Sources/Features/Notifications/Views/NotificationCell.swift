@@ -23,20 +23,18 @@ struct NotificationCell: View {
                     .frame(width: 20, height: 20)
                 
                 VStack(alignment: .leading, spacing: 5, content: {
-                    KFImage(URL(string: "http://localhost:3000/users/\(notification.notSenderId)/avatar"))
+                    KFImage(URL(string: "http://localhost:3000/users/\(notification.notificationSenderId)/avatar"))
                         .resizable()
                         .scaledToFit()
                         .frame(width: 36, height: 36)
                         .cornerRadius(18)
                     
                     
-                    Text("\(notification.username) ")
+                    Text(notification.senderUsername ?? "")
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                        
-                    +
-                        
-                    Text(notification.notificationType.rawValue == "follow" ? NotificationType.follow.notificationMessage : NotificationType.like.notificationMessage)
+                    + Text(" ")
+                    + Text(notification.notificationType.message)
                         .foregroundColor(.black)
                     
                 })

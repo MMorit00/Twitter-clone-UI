@@ -21,12 +21,15 @@ struct FeedView: View {
                             tweet: tweet,
                             tweetService: container.resolve(.tweetService)
                                 ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
+                            notificationService: container.resolve(.notificationService)
+                                ?? NotificationService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
                             currentUserId: authViewModel.currentUser?.id ?? "",
                             onTweetUpdated: { updatedTweet in
                                 viewModel.updateTweet(updatedTweet)
                             }
                         )
                     )
+
                     .padding(.horizontal)
                     Divider()
                 }

@@ -1,75 +1,67 @@
-import SwiftUI
+import Foundation
 
-class NotificationsViewModel: ObservableObject {
-    
-    @Published var notifications = [Notification]()
-    let user: User
-    
-    init(user: User) {
+@MainActor
+final class NotificationsViewModel: ObservableObject {
+    // 发布数据和状态
+    @Published private(set) var notifications: [Notification] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var error: Error?
+
+    // 依赖注入
+    private let service: NotificationServiceProtocol
+    private let user: User
+    // 标志，防止重复加载
+    private var didFetch = false
+
+    init(user: User, service: NotificationServiceProtocol) {
         self.user = user
-        fetchNotifications()
+        self.service = service
     }
 
-    func fetchNotifications() {
-        let userId = self.user.id  // 获取当前用户的 ID
-        
-        // 修正 URL 拼接
-        let urlString = "http://localhost:3000/notifications/\(userId)"
-        print("Fetching notifications for user: \(urlString)")  // 打印 URL，调试用
-        
-        guard let url = URL(string: urlString) else {
-            print("Invalid URL: \(urlString)")  // URL 拼接错误时打印
-            return
+    /// 获取通知列表（首次加载时调用）
+    func fetchNotifications() async {
+        // 若正在加载或已经加载过则直接返回
+        guard !isLoading, !didFetch else { return }
+        isLoading = true
+        error = nil
+        do {
+            notifications = try await service.fetchNotifications(userId: user.id)
+            didFetch = true
+        } catch {
+            self.error = error
+            print("Failed to fetch notifications: \(error)")
         }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        
-        // 获取 token
-        guard let token = UserDefaults.standard.string(forKey: "jwt") else {
-            print("No token found")  // 如果没有 token，提示用户
-            return
-        }
-        
-        // 设置请求头
-        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        
-        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            if let error = error {
-                print("Error fetching notifications: \(error.localizedDescription)")  // 打印请求错误
-                return
-            }
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("HTTP Status Code: \(httpResponse.statusCode)")  // 打印响应的 HTTP 状态码
-            }
-            
-            guard let data = data else {
-                print("No data received")  // 没有接收到数据
-                return
-            }
-            
-            // 打印原始响应数据
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Raw response: \(responseString)")
-            }
-            
+        isLoading = false
+    }
+    
+    /// 刷新通知列表（下拉刷新时调用）
+    func refreshNotifications() async {
+        // 清除标志后重新加载数据
+        didFetch = false
+        await fetchNotifications()
+    }
+    
+    /// 创建新通知
+    func createNotification(receiverId: String, type: NotificationType, postText: String? = nil) {
+        Task {
             do {
-                let notifications = try JSONDecoder().decode([Notification].self, from: data)
-                DispatchQueue.main.async {
-                    self?.notifications = notifications  // 更新通知列表
-                    print("Successfully decoded \(notifications.count) notifications")  // 打印解析成功的通知数量
-                }
+                let newNotification = try await service.createNotification(
+                    username: user.username,
+                    receiverId: receiverId,
+                    type: type,
+                    postText: postText
+                )
+                // 新通知插入列表最前面
+                notifications.insert(newNotification, at: 0)
             } catch {
-                print("Error decoding notifications: \(error)")  // 解码失败时的错误
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("Failed to decode response: \(responseString)")  // 打印无法解码的响应数据
-                }
+                self.error = error
+                print("Failed to create notification: \(error)")
             }
         }
-        
-        task.resume()
+    }
+    
+    /// 清除错误状态
+    func clearError() {
+        error = nil
     }
 }

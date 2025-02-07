@@ -1,1016 +1,672 @@
---- a/Sources/Features/Feed/Models/Tweet.swift
-+++ b/Sources/Features/Feed/Models/Tweet.swift
-@@ -1,33 +1,27 @@
- import Foundation
- 
- struct Tweet: Identifiable, Decodable, Equatable {
-+    // MongoDB 的 _id 字段
-     let _id: String
-     let text: String
-     let userId: String
-+    /// 用户昵称，如为空则显示默认值
-     let username: String
-+    /// 用户真实姓名，如为空则显示默认值
-     let user: String
- 
-+    // 可选字段，后续预留扩展（例如是否带图片）
-     var image: Bool?
-+    /// 点赞列表：存储点赞的用户 id 数组
-     var likes: [String]?
- 
-+    // 满足 Identifiable 协议
-     var id: String {
-         _id
-     }
- 
-     enum CodingKeys: String, CodingKey {
-+        case _id, text, userId, username, user, image, likes
-     }
- 
-     init(from decoder: Decoder) throws {
-@@ -35,20 +29,20 @@ struct Tweet: Identifiable, Decodable, Equatable {
- 
-         _id = try container.decode(String.self, forKey: ._id)
-         text = try container.decode(String.self, forKey: .text)
+--- a/CloneTwitter.xcodeproj/project.pbxproj
++++ b/CloneTwitter.xcodeproj/project.pbxproj
+@@ -65,6 +65,8 @@
+ 		B60970832D53A03E0032F4CF /* TweetService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970822D53A03E0032F4CF /* TweetService.swift */; };
+ 		B60970852D54514F0032F4CF /* ProfileEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970842D54514F0032F4CF /* ProfileEndpoint.swift */; };
+ 		B60970872D5451E00032F4CF /* ProfileServiceProtocol..swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970862D5451E00032F4CF /* ProfileServiceProtocol..swift */; };
++		B609708A2D5644520032F4CF /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970882D5644520032F4CF /* NotificationService.swift */; };
++		B609708B2D5644520032F4CF /* NotificationEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60970892D5644520032F4CF /* NotificationEndpoint.swift */; };
+ 		B8A02EBDEE432D9F43AE0049 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7352DB6F1062A3887691EE77 /* RegisterView.swift */; };
+ 		B9ABDC386C8BDBE0CBBC9CED /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E3914C4587AB9AE684B803 /* FeedViewModel.swift */; };
+ 		C68B29F427476AD1D169FD1C /* CreateTweetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEAC94C4DC0E8ECCA2BC71D /* CreateTweetView.swift */; };
+@@ -143,6 +145,8 @@
+ 		B60970822D53A03E0032F4CF /* TweetService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TweetService.swift; sourceTree = "<group>"; };
+ 		B60970842D54514F0032F4CF /* ProfileEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEndpoint.swift; sourceTree = "<group>"; };
+ 		B60970862D5451E00032F4CF /* ProfileServiceProtocol..swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileServiceProtocol..swift; sourceTree = "<group>"; };
++		B60970882D5644520032F4CF /* NotificationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
++		B60970892D5644520032F4CF /* NotificationEndpoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationEndpoint.swift; sourceTree = "<group>"; };
+ 		BBCC4AAE9275D72F7B097B96 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
+ 		BCD7898679A5681A2D7F6645 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+ 		C2AECAD09846AD417141E19A /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
+@@ -513,6 +517,8 @@
+ 		CF2DB1EF382F817FCB28EE29 /* Services */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B60970892D5644520032F4CF /* NotificationEndpoint.swift */,
++				B60970882D5644520032F4CF /* NotificationService.swift */,
+ 			);
+ 			path = Services;
+ 			sourceTree = "<group>";
+@@ -773,12 +779,14 @@
+ 				740E038E9254CE9DF52E8663 /* CustomProfileTextField.swift in Sources */,
+ 				6FDB19B7ED93FC0A6126E7A2 /* DIContainer.swift in Sources */,
+ 				575D3F3D92D7F56AA224A523 /* EditProfileView.swift in Sources */,
++				B609708B2D5644520032F4CF /* NotificationEndpoint.swift in Sources */,
+ 				F110EC05AA0342C62CE0B4FD /* EditProfileViewModel.swift in Sources */,
+ 				9B2B42593BA606ED4DDA9F25 /* FeedView.swift in Sources */,
+ 				B9ABDC386C8BDBE0CBBC9CED /* FeedViewModel.swift in Sources */,
+ 				E158D8EF56E3BDE19B93E9BD /* HTTPMethod.swift in Sources */,
+ 				94C1C62ED3BC9451E37AD277 /* Home.swift in Sources */,
+ 				3A2BED0FFFAC043F2F81A466 /* ImagePicker.swift in Sources */,
++				B609708A2D5644520032F4CF /* NotificationService.swift in Sources */,
+ 				7584B335511A199DCC9A9819 /* ImageUploader.swift in Sources */,
+ 				A48CE4A74F25A49D0EA54AD2 /* KeychainStore.swift in Sources */,
+ 				265E6A61651B15BF73E09419 /* LoginView.swift in Sources */,
+--- a/Sources/App/DIContainer.swift
++++ b/Sources/App/DIContainer.swift
+@@ -51,7 +51,7 @@ final class DIContainer {
+         container.register(apiClient, type: .apiClient)
+         
+         // 配置 AuthService
++        let authService = AuthService1(apiClient: apiClient)
+         container.register(authService, type: .authService)
+         
+         // 配置 TweetService
+@@ -62,6 +62,10 @@ final class DIContainer {
+         let profileService = ProfileService(apiClient: apiClient)
+         container.register(profileService, type: .profileService)
+         
++        // 配置 NotificationService
++        let notificationService = NotificationService(apiClient: apiClient)
++        container.register(notificationService, type: .notificationService)
 +        
-+        // 如果 userId 是嵌套对象，则解析其中的用户信息
-+        if let userInfo = try? container.decode([String: String].self, forKey: .userId) {
-+            userId = userInfo["_id"] ?? ""
-+            user = userInfo["name"] ?? ""
-+            username = userInfo["username"] ?? ""
-         } else {
-+            // 否则直接解码，并对 user 与 username 采用 decodeIfPresent，若缺失则提供默认值
-             userId = try container.decode(String.self, forKey: .userId)
-+            user = try container.decodeIfPresent(String.self, forKey: .user) ?? ""
-+            username = try container.decodeIfPresent(String.self, forKey: .username) ?? ""
+         return container
+     }
+ }
+--- a/Sources/Core/Network/Base/APIClient.swift
++++ b/Sources/Core/Network/Base/APIClient.swift
+@@ -17,19 +17,20 @@ final class APIClient: APIClientProtocol {
+     private let baseURL: URL
+     private let session: URLSessionProtocol
+     private let maxRetries: Int
++
++    init(baseURL: URL,
+          session: URLSessionProtocol = URLSession.shared,
++         maxRetries: Int = 3)
++    {
+         self.baseURL = baseURL
+         self.session = session
+         self.maxRetries = maxRetries
+     }
++
+     /// 发送网络请求，支持自动重试机制
+     func sendRequest<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+         var attempts = 0
++
+         while attempts < maxRetries {
+             do {
+                 return try await performRequest(endpoint)
+@@ -45,90 +46,106 @@ final class APIClient: APIClientProtocol {
+                 continue
+             }
          }
-+        
-         image = try? container.decode(Bool.self, forKey: .image)
-         likes = try? container.decode([String].self, forKey: .likes)
++
+         throw NetworkError.maxRetriesExceeded
      }
-+}
-\ No newline at end of file
++
+     /// 执行实际的网络请求并处理响应
+     private func performRequest<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+         var components = URLComponents(url: baseURL.appendingPathComponent(endpoint.path),
++                                       resolvingAgainstBaseURL: true)
+         components?.queryItems = endpoint.queryItems
++
+         guard let url = components?.url else {
+             throw NetworkError.invalidURL
+         }
++
+         var request = URLRequest(url: url)
+         request.httpMethod = endpoint.method.rawValue
+         request.httpBody = endpoint.body
+         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
++
+         endpoint.headers?.forEach { key, value in
+             request.setValue(value, forHTTPHeaderField: key)
+         }
++
+         #if DEBUG
++            logRequest(request)
+         #endif
++
+         let (data, response) = try await session.data(for: request)
++
+         #if DEBUG
++            logResponse(response, data: data)
+         #endif
++
+         guard let httpResponse = response as? HTTPURLResponse else {
+             throw NetworkError.invalidResponse
+         }
++
+         switch httpResponse.statusCode {
++        case 200 ... 299:
+             do {
+                 let decoder = JSONDecoder()
+                 decoder.keyDecodingStrategy = .convertFromSnakeCase
++
++                // 创建自定义的 ISO8601 格式化器，并支持毫秒
++                let isoFormatter = ISO8601DateFormatter()
++                isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
++
++                // 设置自定义日期解码策略
++                decoder.dateDecodingStrategy = .custom { decoder -> Date in
++                    let container = try decoder.singleValueContainer()
++                    let dateString = try container.decode(String.self)
++                    if let date = isoFormatter.date(from: dateString) {
++                        return date
++                    }
++                    throw DecodingError.dataCorruptedError(in: container, debugDescription: "无法解析日期字符串: \(dateString)")
++                }
++
+                 return try decoder.decode(T.self, from: data)
+             } catch {
+                 #if DEBUG
++                    print("解码错误: \(error)")
++                    if let json = String(data: data, encoding: .utf8) {
++                        print("原始JSON: \(json)")
++                    }
+                 #endif
+                 throw NetworkError.decodingError(error)
+             }
+         case 401:
+             throw NetworkError.unauthorized
++        case 400 ... 499:
+             throw NetworkError.clientError(try? decodeErrorResponse(from: data))
++        case 500 ... 599:
+             throw NetworkError.serverError
+         default:
+             throw NetworkError.httpError(httpResponse.statusCode)
+         }
+     }
++
+     #if DEBUG
++        private func logRequest(_ request: URLRequest) {
++            print("🚀 发送请求: \(request.httpMethod ?? "Unknown") \(request.url?.absoluteString ?? "")")
++            if let headers = request.allHTTPHeaders {
++                print("📋 Headers: \(headers)")
++            }
++            if let body = request.httpBody,
++               let json = String(data: body, encoding: .utf8)
++            {
++                print("📦 Body: \(json)")
++            }
+         }
++
++        private func logResponse(_ response: URLResponse, data: Data) {
++            guard let httpResponse = response as? HTTPURLResponse else { return }
++            print("📥 收到响应: \(httpResponse.statusCode)")
++            if let json = String(data: data, encoding: .utf8) {
++                print("📄 Response: \(json)")
++            }
+         }
+     #endif
++
+     private func decodeErrorResponse(from data: Data) throws -> APIError {
+         return try JSONDecoder().decode(APIError.self, from: data)
+     }
+@@ -137,7 +154,7 @@ final class APIClient: APIClientProtocol {
+ // 扩展 URLRequest 以方便访问所有 headers
+ private extension URLRequest {
+     var allHTTPHeaders: [String: String]? {
++        return allHTTPHeaderFields
+     }
+ }
+ 
+--- a/Sources/Core/Network/Base/APIEndpoint.swift
++++ b/Sources/Core/Network/Base/APIEndpoint.swift
+@@ -117,32 +117,47 @@ enum TweetEndpoint: APIEndpoint {
+         }
+     }
+ 
++    var headers: [String: String]? {
++        var headers: [String: String] = [:]
++        
++        if case .uploadImage = self {
++            // 修改: 使用正确的 multipart Content-Type
++            let boundary = UUID().uuidString
++            headers["Content-Type"] = "multipart/form-data; boundary=\(boundary)"
++        } else {
++            headers["Content-Type"] = "application/json"
++        }
++        
++        if let token = UserDefaults.standard.string(forKey: "jwt") {
++            headers["Authorization"] = "Bearer \(token)"
++        }
++        
++        return headers
++    }
++    
+     var body: Data? {
+         switch self {
+         case let .createTweet(text, userId):
+             let body = ["text": text, "userId": userId]
+             return try? JSONSerialization.data(withJSONObject: body)
+         case let .uploadImage(_, imageData):
++            // 修改: 构造 multipart 请求体
++            let boundary = UUID().uuidString
++            var data = Data()
++            
++            // 添加图片数据
++            data.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
++            data.append("Content-Disposition: form-data; name=\"image\"; filename=\"tweet.jpg\"\r\n".data(using: .utf8)!)
++            data.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
++            data.append(imageData)
++            data.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
++            
++            return data
+         default:
+             return nil
+         }
+     }
++    
+     var queryItems: [URLQueryItem]? {
+         return nil
+     }
+--- a/Sources/Features/Feed/Services/TweetService.swift
++++ b/Sources/Features/Feed/Services/TweetService.swift
+@@ -55,12 +55,26 @@ final class TweetService: TweetServiceProtocol {
+     }
+ 
+     func uploadImage(tweetId: String, image: UIImage) async throws -> ImageUploadResponse {
++        return try await withCheckedThrowingContinuation { continuation in
++            ImageUploader.uploadImage(
++                paramName: "image",
++                fileName: "tweet.jpg",
++                image: image,
++                urlPath: "/tweets/\(tweetId)/image"
++            ) { result in
++                switch result {
++                case .success(let response):
++                    if let data = try? JSONSerialization.data(withJSONObject: response),
++                       let uploadResponse = try? JSONDecoder().decode(ImageUploadResponse.self, from: data) {
++                        continuation.resume(returning: uploadResponse)
++                    } else {
++                        continuation.resume(throwing: NetworkError.decodingError(NSError(domain: "", code: -1)))
++                    }
++                case .failure(let error):
++                    continuation.resume(throwing: error)
++                }
++            }
+         }
+     }
+ }
+ 
 --- a/Sources/Features/Feed/ViewModels/TweetCellViewModel.swift
 +++ b/Sources/Features/Feed/ViewModels/TweetCellViewModel.swift
-@@ -1,46 +1,88 @@
- import SwiftUI
- 
+@@ -3,24 +3,24 @@ import SwiftUI
  @MainActor
  final class TweetCellViewModel: ObservableObject {
      @Published var tweet: Tweet
-+    /// 用于防止重复点击点赞/取消点赞时的 loading 状态
-+    @Published var isLikeActionLoading: Bool = false
+     @Published var isLikeActionLoading: Bool = false
      @Published var error: Error?
      
      private let tweetService: TweetServiceProtocol
-+    /// 当前登录用户的 id，从认证模块传入
-+    private let currentUserId: String
-+    /// 当 tweet 被更新时回调（例如同步 FeedView 中的 tweet）
++    private let notificationService: NotificationServiceProtocol
+     private let currentUserId: String
      private let onTweetUpdated: ((Tweet) -> Void)?
      
      init(
          tweet: Tweet,
          tweetService: TweetServiceProtocol,
-+        currentUserId: String,
++        notificationService: NotificationServiceProtocol,
+         currentUserId: String,
          onTweetUpdated: ((Tweet) -> Void)? = nil
      ) {
          self.tweet = tweet
          self.tweetService = tweetService
-+        self.currentUserId = currentUserId
++        self.notificationService = notificationService
+         self.currentUserId = currentUserId
          self.onTweetUpdated = onTweetUpdated
      }
-     
-+    /// 通过比较 likes 数组判断是否已点赞
-+    var isLiked: Bool {
-+        tweet.likes?.contains(currentUserId) ?? false
-+    }
-+    
-+    /// 点赞数
-+    var likesCount: Int {
-+        tweet.likes?.count ?? 0
-+    }
-+    
-+    /// 点赞操作（乐观更新）
+@@ -38,13 +38,12 @@ final class TweetCellViewModel: ObservableObject {
+     /// 点赞操作（乐观更新）
      func likeTweet() {
-+        guard !isLikeActionLoading else { return }
-+        // 如果已经点赞则切换为取消点赞
-+        if isLiked {
-+            unlikeTweet()
-+            return
-+        }
-+        
-+        // 乐观更新：将当前用户 id 添加到 likes 数组中
-+        if tweet.likes == nil {
-+            tweet.likes = [currentUserId]
-+        } else if !(tweet.likes!.contains(currentUserId)) {
-+            tweet.likes!.append(currentUserId)
-+        }
-+        
-+        isLikeActionLoading = true
+         guard !isLikeActionLoading else { return }
+         if isLiked {
+             unlikeTweet()
+             return
+         }
+         
++        // 乐观更新点赞状态
+         if tweet.likes == nil {
+             tweet.likes = [currentUserId]
+         } else if !(tweet.likes!.contains(currentUserId)) {
+@@ -55,13 +54,21 @@ final class TweetCellViewModel: ObservableObject {
          
          Task {
              do {
++                // 发送点赞请求
                  let updatedTweet = try await tweetService.likeTweet(tweetId: tweet.id)
-+                // 使用服务端返回数据确保状态一致
                  self.tweet = updatedTweet
                  onTweetUpdated?(updatedTweet)
++                
++                // 发送通知
++                try await notificationService.createNotification(
++                    username: tweet.username,
++                    receiverId: tweet.userId,
++                    type: .like,
++                    postText: tweet.text
++                )
              } catch {
                  print("点赞失败: \(error)")
-+                // 回滚乐观更新
-+                if var likes = tweet.likes {
-+                    likes.removeAll { $0 == currentUserId }
-+                    tweet.likes = likes
-+                }
-+                self.error = error
-             }
-+            isLikeActionLoading = false
-         }
-     }
-     
-+    /// 取消点赞操作（乐观更新）
-     func unlikeTweet() {
-+        guard !isLikeActionLoading else { return }
-+        
-+        // 乐观更新：移除 likes 数组中的当前用户 id
-+        if var likes = tweet.likes {
-+            likes.removeAll { $0 == currentUserId }
-+            tweet.likes = likes
-+        }
-+        
-+        isLikeActionLoading = true
-         
-         Task {
-             do {
-@@ -48,25 +90,21 @@ final class TweetCellViewModel: ObservableObject {
-                 self.tweet = updatedTweet
-                 onTweetUpdated?(updatedTweet)
-             } catch {
-                 print("取消点赞失败: \(error)")
-+                // 回滚：如果失败则将当前用户 id 加回去
-+                if tweet.likes == nil {
-+                    tweet.likes = [currentUserId]
-+                } else if !(tweet.likes!.contains(currentUserId)) {
-+                    tweet.likes!.append(currentUserId)
-+                }
-+                self.error = error
-             }
-+            isLikeActionLoading = false
-         }
-     }
-     
-+    /// 获取头像 URL，不依赖点赞 loading 状态
-+    func getUserAvatarURL() -> URL? {
-+        URL(string: "http://localhost:3000/users/\(tweet.userId)/avatar")
-     }
- }
++                // 回滚点赞状态
+                 if var likes = tweet.likes {
+                     likes.removeAll { $0 == currentUserId }
+                     tweet.likes = likes
 --- a/Sources/Features/Feed/Views/FeedView.swift
 +++ b/Sources/Features/Feed/Views/FeedView.swift
-@@ -1,13 +1,14 @@
- import SwiftUI
- 
- struct FeedView: View {
-     @ObserveInjection var inject
-     @Environment(\.diContainer) private var container
-     @StateObject private var viewModel: FeedViewModel
-+    @EnvironmentObject private var authViewModel: AuthState
- 
-     init(container: DIContainer) {
-+        let tweetService: TweetServiceProtocol = container.resolve(.tweetService)
-+            ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
-         _viewModel = StateObject(wrappedValue: FeedViewModel(tweetService: tweetService))
-     }
- 
-@@ -18,7 +19,9 @@ struct FeedView: View {
-                     TweetCellView(
-                         viewModel: TweetCellViewModel(
+@@ -21,12 +21,15 @@ struct FeedView: View {
                              tweet: tweet,
-+                            tweetService: container.resolve(.tweetService)
-+                                ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
-+                            currentUserId: authViewModel.currentUser?.id ?? "",
+                             tweetService: container.resolve(.tweetService)
+                                 ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
++                            notificationService: container.resolve(.notificationService)
++                                ?? NotificationService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
+                             currentUserId: authViewModel.currentUser?.id ?? "",
                              onTweetUpdated: { updatedTweet in
                                  viewModel.updateTweet(updatedTweet)
                              }
---- a/Sources/Features/Feed/Views/TweetCellView.swift
-+++ b/Sources/Features/Feed/Views/TweetCellView.swift
-@@ -1,5 +1,5 @@
- import Kingfisher
-+import SwiftUI
- 
- struct TweetCellView: View {
-     @ObserveInjection var inject
-@@ -8,6 +8,7 @@ struct TweetCellView: View {
- 
-     var body: some View {
-         VStack(alignment: .leading, spacing: 12) {
-+            // 如果点赞数大于 0，则显示点赞数
-             if viewModel.likesCount > 0 {
-                 HStack(spacing: 8) {
-                     Image(systemName: "heart.fill")
-@@ -18,16 +19,16 @@ struct TweetCellView: View {
+                         )
+                     )
++
+                     .padding(.horizontal)
+                     Divider()
                  }
-                 .padding(.trailing, 16)
-             }
-+
-             HStack(alignment: .top, spacing: 12) {
-+                // 头像区域：点击跳转到对应用户的个人主页
-+                NavigationLink {
-+                    ProfileView(userId: viewModel.tweet.userId, diContainer: container)
-+                } label: {
-+                    avatarView
-+                }
-+
-+                // 推文内容区域
-                 VStack(alignment: .leading, spacing: 4) {
-                     // 用户信息
-                     HStack {
-@@ -37,7 +38,7 @@ struct TweetCellView: View {
-                             .foregroundColor(.gray)
-                         Text("·")
-                             .foregroundColor(.gray)
-+                        // 目前固定显示时间，后续可根据需求格式化
-                         Text("11h")
-                             .foregroundColor(.gray)
+--- a/Sources/Features/Main/Views/Home.swift
++++ b/Sources/Features/Main/Views/Home.swift
+@@ -18,16 +18,18 @@ struct HomeView: View {
                      }
-@@ -49,7 +50,7 @@ struct TweetCellView: View {
-                         .frame(maxHeight: 100)
-                         .lineSpacing(4)
+                     .tag(0)
  
-+                    // 推文图片（如果存在）
-                     if viewModel.tweet.image == true {
-                         GeometryReader { proxy in
-                             KFImage(URL(string: "http://localhost:3000/tweets/\(viewModel.tweet.id)/image"))
-@@ -62,17 +63,21 @@ struct TweetCellView: View {
-                         .zIndex(0)
++                SearchView(searchText: $searchText, isEditing: $isSearching)
++             
+                     .tabItem {
+                         Image(systemName: "magnifyingglass")
+                         Text("Search")
                      }
+                     .tag(1)
+                 
++                NotificationsView(
++                    user: viewModel.currentUser ?? User.mock,
++                    service: container.resolve(.notificationService) ?? NotificationService(apiClient:APIClient( baseURL: APIConfig.baseURL))
++                )
+                     .tabItem {
+                         Image(systemName: "bell")
+                         Text("Notifications")
+--- a/Sources/Features/Notifications/Models/Notification.swift
++++ b/Sources/Features/Notifications/Models/Notification.swift
+@@ -1,27 +1,54 @@
+ import Foundation
  
-+                    // 互动按钮区域
-                     HStack(spacing: 40) {
-                         InteractionButton(image: "message", count: 0)
-                         InteractionButton(image: "arrow.2.squarepath", count: 0)
- 
-                         Button(action: {
-+                            if viewModel.isLiked {
-+                                viewModel.unlikeTweet()
-+                            } else {
-+                                viewModel.likeTweet()
-+                            }
-                         }) {
-                             HStack(spacing: 4) {
-+                                Image(systemName: viewModel.isLiked ? "heart.fill" : "heart")
-+                                    .foregroundColor(viewModel.isLiked ? .red : .gray)
-                                 if let likes = viewModel.tweet.likes {
-                                     Text("\(likes.count)")
-                                         .font(.system(size: 12))
-@@ -96,30 +101,23 @@ struct TweetCellView: View {
-         .contentShape(Rectangle())
-         .enableInjection()
-     }
-+
-     // 抽取的头像视图
-     private var avatarView: some View {
-+        KFImage(viewModel.getUserAvatarURL())
-+            .placeholder {
-+                Circle()
-+                    .fill(Color.gray)
-                     .frame(width: 44, height: 44)
-             }
-+            .resizable()
-+            .scaledToFill()
-+            .frame(width: 44, height: 44)
-+            .clipShape(Circle())
++// 通知类型枚举
++enum NotificationType: String, Codable {
+     case like
+     case follow
++    
++    var message: String {
+         switch self {
++        case .like: return "点赞了你的推文"
++        case .follow: return "关注了你"
+         }
      }
  }
++
++struct Notification: Identifiable, Codable {
++    let id: String
++    let notificationSenderId: String
++    let notificationReceiverId: String
++    let notificationType: NotificationType
++    let postText: String?
++    let createdAt: Date
++    var senderUsername: String?
++
++    enum CodingKeys: String, CodingKey {
++        case id = "_id"
++        case notificationSenderId
++        case notificationReceiverId
++        case notificationType
++        case postText
++        case createdAt
++    }
++    
++    // 定义内部用于解析发送者信息的 key
++    enum SenderKeys: String, CodingKey {
++        case id = "_id"
++        case username
++    }
++    
++    init(from decoder: Decoder) throws {
++        let container = try decoder.container(keyedBy: CodingKeys.self)
++        id = try container.decode(String.self, forKey: .id)
++        
++        // 对 notificationSenderId 字段进行嵌套解码
++        let senderContainer = try container.nestedContainer(keyedBy: SenderKeys.self, forKey: .notificationSenderId)
++        notificationSenderId = try senderContainer.decode(String.self, forKey: .id)
++        senderUsername = try senderContainer.decode(String.self, forKey: .username)
++        
++        notificationReceiverId = try container.decode(String.self, forKey: .notificationReceiverId)
++        notificationType = try container.decode(NotificationType.self, forKey: .notificationType)
++        postText = try container.decodeIfPresent(String.self, forKey: .postText)
++        createdAt = try container.decode(Date.self, forKey: .createdAt)
++    }
++}
+\ No newline at end of file
+--- a/Sources/Features/Notifications/ViewModels/NotificationsViewModel.swift
++++ b/Sources/Features/Notifications/ViewModels/NotificationsViewModel.swift
+@@ -1,75 +1,67 @@
++import Foundation
  
-+// MARK: - 子视图：互动按钮
++@MainActor
++final class NotificationsViewModel: ObservableObject {
++    // 发布数据和状态
++    @Published private(set) var notifications: [Notification] = []
++    @Published private(set) var isLoading = false
++    @Published private(set) var error: Error?
++
++    // 依赖注入
++    private let service: NotificationServiceProtocol
++    private let user: User
++    // 标志，防止重复加载
++    private var didFetch = false
++
++    init(user: User, service: NotificationServiceProtocol) {
+         self.user = user
++        self.service = service
+     }
  
- private struct InteractionButton: View {
-     let image: String
++    /// 获取通知列表（首次加载时调用）
++    func fetchNotifications() async {
++        // 若正在加载或已经加载过则直接返回
++        guard !isLoading, !didFetch else { return }
++        isLoading = true
++        error = nil
++        do {
++            notifications = try await service.fetchNotifications(userId: user.id)
++            didFetch = true
++        } catch {
++            self.error = error
++            print("Failed to fetch notifications: \(error)")
+         }
++        isLoading = false
++    }
++    
++    /// 刷新通知列表（下拉刷新时调用）
++    func refreshNotifications() async {
++        // 清除标志后重新加载数据
++        didFetch = false
++        await fetchNotifications()
++    }
++    
++    /// 创建新通知
++    func createNotification(receiverId: String, type: NotificationType, postText: String? = nil) {
++        Task {
+             do {
++                let newNotification = try await service.createNotification(
++                    username: user.username,
++                    receiverId: receiverId,
++                    type: type,
++                    postText: postText
++                )
++                // 新通知插入列表最前面
++                notifications.insert(newNotification, at: 0)
+             } catch {
++                self.error = error
++                print("Failed to create notification: \(error)")
+             }
+         }
+     }
++    
++    /// 清除错误状态
++    func clearError() {
++        error = nil
++    }
++}
+\ No newline at end of file
+--- a/Sources/Features/Notifications/Views/NotificationCell.swift
++++ b/Sources/Features/Notifications/Views/NotificationCell.swift
+@@ -23,20 +23,18 @@ struct NotificationCell: View {
+                     .frame(width: 20, height: 20)
+                 
+                 VStack(alignment: .leading, spacing: 5, content: {
++                    KFImage(URL(string: "http://localhost:3000/users/\(notification.notificationSenderId)/avatar"))
+                         .resizable()
+                         .scaledToFit()
+                         .frame(width: 36, height: 36)
+                         .cornerRadius(18)
+                     
+                     
++                    Text(notification.senderUsername ?? "")
+                         .fontWeight(.bold)
+                         .foregroundColor(.primary)
++                    + Text(" ")
++                    + Text(notification.notificationType.message)
+                         .foregroundColor(.black)
+                     
+                 })
+--- a/Sources/Features/Notifications/Views/NotificationsView.swift
++++ b/Sources/Features/Notifications/Views/NotificationsView.swift
+@@ -1,72 +1,69 @@
+ import SwiftUI
+ 
+ struct NotificationsView: View {
++    @StateObject private var viewModel: NotificationsViewModel
++
++    init(user: User, service: NotificationServiceProtocol) {
++        _viewModel = StateObject(wrappedValue: NotificationsViewModel(user: user, service: service))
+     }
++
+     var body: some View {
++        ZStack {
++            // 如果没有加载过数据，并且正在加载时显示 ProgressView，否则显示内容
++            if viewModel.isLoading && viewModel.notifications.isEmpty {
++                ProgressView()
+             } else {
++                content
++            }
++        }
++        // 使用动态绑定控制 Alert 的显示
++        .alert("错误", isPresented: Binding(
++            get: { viewModel.error != nil },
++            set: { _ in viewModel.clearError() }
++        )) {
++            Button("确定") {
++                viewModel.clearError()
++            }
++        } message: {
++            if let error = viewModel.error {
++                Text(error.localizedDescription)
++            }
++        }
++        // 视图首次出现时加载通知
++        .task {
++            await viewModel.fetchNotifications()
++        }
++    }
++
++    private var content: some View {
++        ScrollView {
++            LazyVStack(spacing: 0) {
++                if viewModel.notifications.isEmpty {
++                    emptyView
++                } else {
++                    ForEach(viewModel.notifications) { notification in
++                        NotificationCell(notification: notification)
++                        Divider()
+                     }
+                 }
+             }
+         }
++        // 下拉刷新时重新加载数据
++        .refreshable {
++            await viewModel.refreshNotifications()
++        }
++    }
++
++    private var emptyView: some View {
++        VStack(spacing: 12) {
++            Text("暂无通知")
++                .font(.title3)
++                .fontWeight(.semibold)
++            Text("新的通知将会显示在这里")
++                .font(.subheadline)
++                .foregroundColor(.gray)
+         }
++        .frame(maxWidth: .infinity, maxHeight: .infinity)
++        .padding(.vertical, 32)
+     }
++}
+\ No newline at end of file
 --- a/Sources/Features/Profile/Views/ProfileView.swift
 +++ b/Sources/Features/Profile/Views/ProfileView.swift
-@@ -365,14 +365,14 @@ struct TweetListView: View {
-     var tweets: [Tweet]
-     var viewModel: ProfileViewModel
-     @Environment(\.diContainer) private var container
-+    @EnvironmentObject private var authViewModel: AuthState 
-     var body: some View {
-         VStack(spacing: 18) {
-             ForEach(tweets) { tweet in
+@@ -372,8 +372,9 @@ struct TweetListView: View {
                  TweetCellView(
                      viewModel: TweetCellViewModel(
                          tweet: tweet,
-+                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)), currentUserId: authViewModel.currentUser?.id ?? ""
++                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),   notificationService:container.resolve(.notificationService) ?? NotificationService(apiClient:APIClient( baseURL: APIConfig.baseURL)), currentUserId: authViewModel.currentUser?.id ?? ""
                      )
++                 
                  )
                  Divider()
-@@ -381,4 +381,4 @@ struct TweetListView: View {
-         .padding(.top)
-         .zIndex(0)
-     }
-\ No newline at end of file
-+}
---- a/git.md
-+++ b/git.md
-@@ -1,237 +1,702 @@
-\ No newline at end of file
-+import Foundation
-+import SwiftUI
-+
-+struct Tweet: Identifiable, Decodable, Equatable {
-+    // MongoDB的_id字段
-+    let _id: String
-+    let text: String
-+    let userId: String
-+    let username: String
-+    let user: String
-+
-+    // 可选字段,后续功能预留
-+    var image: Bool?
-+    var likes: [String]?
-+    var didLike: Bool? = false // 添加点赞状态标记
-+
-+    // 满足Identifiable协议
-+    var id: String {
-+        _id
-+    }
-+
-+    // 处理JSON字段映射
-+    enum CodingKeys: String, CodingKey {
-+        case _id
-+        case text
-+        case userId
-+        case username
-+        case user
-+        case image
-+        case likes
-+    }
-+
-+    init(from decoder: Decoder) throws {
-+        let container = try decoder.container(keyedBy: CodingKeys.self)
-+
-+        _id = try container.decode(String.self, forKey: ._id)
-+        text = try container.decode(String.self, forKey: .text)
-+
-+        // 处理嵌套的用户信息
-+        if let userId = try? container.decode([String: String].self, forKey: .userId) {
-+            self.userId = userId["_id"] ?? ""
-+            user = userId["name"] ?? ""
-+            username = userId["username"] ?? ""
-+        } else {
-+            // 兼容直接字符串形式的 userId
-+            userId = try container.decode(String.self, forKey: .userId)
-+            user = try container.decode(String.self, forKey: .user)
-+            username = try container.decode(String.self, forKey: .username)
-+        }
-+
-+        image = try? container.decode(Bool.self, forKey: .image)
-+        likes = try? container.decode([String].self, forKey: .likes)
-+    }
-+}
-+
-+
-+
-+import SwiftUI
-+
-+@MainActor
-+final class TweetCellViewModel: ObservableObject {
-+    @Published var tweet: Tweet
-+    @Published var isLoading = false
-+    @Published var error: Error?
-+    
-+    private let tweetService: TweetServiceProtocol
-+    private let onTweetUpdated: ((Tweet) -> Void)?
-+    
-+    init(
-+        tweet: Tweet,
-+        tweetService: TweetServiceProtocol,
-+        onTweetUpdated: ((Tweet) -> Void)? = nil
-+    ) {
-+        self.tweet = tweet
-+        self.tweetService = tweetService
-+        self.onTweetUpdated = onTweetUpdated
-+    }
-+    
-+    func likeTweet() {
-+        guard !isLoading else { return }
-+        isLoading = true
-+        
-+        Task {
-+            do {
-+                let updatedTweet = try await tweetService.likeTweet(tweetId: tweet.id)
-+                self.tweet = updatedTweet
-+                onTweetUpdated?(updatedTweet)
-+            } catch {
-+                self.error = error
-+                print("点赞失败: \(error)")
-+            }
-+            isLoading = false
-+        }
-+    }
-+    
-+    func unlikeTweet() {
-+        guard !isLoading else { return }
-+        isLoading = true
-+        
-+        Task {
-+            do {
-+                let updatedTweet = try await tweetService.unlikeTweet(tweetId: tweet.id)
-+                self.tweet = updatedTweet
-+                onTweetUpdated?(updatedTweet)
-+            } catch {
-+                self.error = error
-+                print("取消点赞失败: \(error)")
-+            }
-+            isLoading = false
-+        }
-+    }
-+    
-+  // 新增获取用户头像 URL 的方法
-+      func getUserAvatarURL() -> URL? {
-+          // 构造头像 URL，这里使用 tweet.userId
-+          return URL(string: "http://localhost:3000/users/\(tweet.userId)/avatar")
-+      }
-+      
-+    
-+    var isLiked: Bool {
-+        tweet.didLike ?? false
-+    }
-+    
-+    var likesCount: Int {
-+        tweet.likes?.count ?? 0
-+    }
-+}
-+
-+//
-+//  TweetService.swift
-+//  CloneTwitter
-+//
-+//  Created by 潘令川 on 2025/2/5.
-+//
-+import Foundation
-+
-+struct ImageUploadResponse: Codable {
-+    let message: String
-+}
-+
-+
-+
-+
-+
-+import Foundation
-+import UIKit
-+
-+protocol TweetServiceProtocol {
-+    
-+  func fetchTweets() async throws -> [Tweet]
-+  func createTweet(text: String, userId: String) async throws -> Tweet
-+  func likeTweet(tweetId: String) async throws -> Tweet
-+  func unlikeTweet(tweetId: String) async throws -> Tweet
-+  func uploadImage(tweetId: String, image: UIImage) async throws -> ImageUploadResponse
-+
-+}
-+
-+final class TweetService: TweetServiceProtocol {
-+    private let apiClient: APIClientProtocol
-+
-+    init(apiClient: APIClientProtocol) {
-+        self.apiClient = apiClient
-+    }
-+
-+    func fetchTweets() async throws -> [Tweet] {
-+        let endpoint = TweetEndpoint.fetchTweets
-+        return try await apiClient.sendRequest(endpoint)
-+    }
-+
-+    func createTweet(text: String, userId: String) async throws -> Tweet {
-+        let endpoint = TweetEndpoint.createTweet(text: text, userId: userId)
-+        return try await apiClient.sendRequest(endpoint)
-+    }
-+
-+    func likeTweet(tweetId: String) async throws -> Tweet {
-+        let endpoint = TweetEndpoint.likeTweet(tweetId: tweetId)
-+        return try await apiClient.sendRequest(endpoint)
-+    }
-+
-+    func unlikeTweet(tweetId: String) async throws -> Tweet {
-+        let endpoint = TweetEndpoint.unlikeTweet(tweetId: tweetId)
-+        return try await apiClient.sendRequest(endpoint)
-+    }
-+
-+    func uploadImage(tweetId: String, image: UIImage) async throws -> ImageUploadResponse {
-+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-+            throw NetworkError.custom("Failed to convert image to data")
-+        }
-+        
-+        let endpoint = TweetEndpoint.uploadImage(tweetId: tweetId, imageData: imageData)
-+        return try await apiClient.sendRequest(endpoint)
-+    }
-+}
-+
-+#if DEBUG
-+    final class MockTweetService: TweetServiceProtocol {
-+        var shouldSucceed = true
-+
-+        func fetchTweets() async throws -> [Tweet] {
-+            if shouldSucceed {
-+                return [.mock, .mock]
-+            } else {
-+                throw NetworkError.serverError
-+            }
-+        }
-+
-+        func createTweet(text _: String, userId _: String) async throws -> Tweet {
-+            if shouldSucceed {
-+                return .mock
-+            } else {
-+                throw NetworkError.serverError
-+            }
-+        }
-+
-+        func likeTweet(tweetId _: String) async throws -> Tweet {
-+            if shouldSucceed {
-+                return .mock
-+            } else {
-+                throw NetworkError.serverError
-+            }
-+        }
-+
-+        func unlikeTweet(tweetId _: String) async throws -> Tweet {
-+            if shouldSucceed {
-+                return .mock
-+            } else {
-+                throw NetworkError.serverError
-+            }
-+        }
-+
-+      func uploadImage(tweetId _: String, image _: UIImage) async throws -> ImageUploadResponse {
-+          if shouldSucceed {
-+              return ImageUploadResponse(message: "Tweet image uploaded successfully")
-+          } else {
-+              throw NetworkError.serverError
-+          }
-+      }
-+    }
-+
-+    // Mock 实现修正
-+
-+#if DEBUG
-+extension Tweet {
-+    static var mock: Tweet {
-+        let json = """
-+        {
-+            "_id": "mock_id",
-+            "text": "This is a mock tweet",
-+            "userId": "mock_user_id",
-+            "username": "mock_username",
-+            "user": "Mock User"
-+        }
-+        """.data(using: .utf8)!
-+        
-+        return try! JSONDecoder().decode(Tweet.self, from: json)
-+    }
-+}
-+#endif
-+#endif
-+
-+import SwiftUI
+             }
+--- a/Sources/Features/Search/Views/SearchView.swift
++++ b/Sources/Features/Search/Views/SearchView.swift
+@@ -1,46 +1,46 @@
 +import Kingfisher
-+
-+struct TweetCellView: View {
-+    @ObserveInjection var inject
-+    @ObservedObject var viewModel: TweetCellViewModel
-+    @Environment(\.diContainer) private var container
-+
-+    var body: some View {
-+        VStack(alignment: .leading, spacing: 12) {
-+            if viewModel.likesCount > 0 {
-+                HStack(spacing: 8) {
-+                    Image(systemName: "heart.fill")
-+                        .foregroundColor(.gray)
-+                    Text("\(viewModel.likesCount) likes")
-+                        .font(.system(size: 14))
-+                        .foregroundColor(.gray)
-+                }
-+                .padding(.trailing, 16)
-+            }
-+            
-+            HStack(alignment: .top, spacing: 12) {
-+                // 头像部分：点击头像跳转到对应用户的个人主页
-+              NavigationLink {
-+                  ProfileView(userId: viewModel.tweet.userId, diContainer: container)
-+              } label: {
-+                  avatarView
-+              }
-+                
-+                // 推文内容
-+                VStack(alignment: .leading, spacing: 4) {
-+                    // 用户信息
-+                    HStack {
-+                        Text(viewModel.tweet.user)
-+                            .fontWeight(.semibold)
-+                        Text("@\(viewModel.tweet.username)")
-+                            .foregroundColor(.gray)
-+                        Text("·")
-+                            .foregroundColor(.gray)
-+                        // TODO: 添加时间格式化显示
-+                        Text("11h")
-+                            .foregroundColor(.gray)
-+                    }
-+                    .font(.system(size: 16))
-+
-+                    // 推文文本
-+                    Text(viewModel.tweet.text)
-+                        .font(.system(size: 16))
-+                        .frame(maxHeight: 100)
-+                        .lineSpacing(4)
-+
-+                    // Tweet Image (if exists)
-+                    if viewModel.tweet.image == true {
-+                        GeometryReader { proxy in
-+                            KFImage(URL(string: "http://localhost:3000/tweets/\(viewModel.tweet.id)/image"))
-+                                .resizable()
-+                                .scaledToFill()
-+                                .frame(width: proxy.size.width, height: 200)
-+                                .cornerRadius(15)
-+                        }
-+                        .frame(height: 200)
-+                        .zIndex(0)
-+                    }
-+
-+                    // 互动按钮
-+                    HStack(spacing: 40) {
-+                        InteractionButton(image: "message", count: 0)
-+                        InteractionButton(image: "arrow.2.squarepath", count: 0)
-+
-+                        Button(action: {
-+                            viewModel.likeTweet()
-+                        }) {
-+                            HStack(spacing: 4) {
-+                                Image(systemName: viewModel.tweet.didLike! ? "heart.fill" : "heart")
-+                                    .foregroundColor(viewModel.tweet.didLike! ? .red : .gray)
-+                                if let likes = viewModel.tweet.likes {
-+                                    Text("\(likes.count)")
-+                                        .font(.system(size: 12))
-+                                        .foregroundColor(.gray)
-+                                }
-+                            }
-+                        }
-+                        .zIndex(1)
-+                        .padding(8)
-+                        .contentShape(Rectangle())
-+
-+                        InteractionButton(image: "square.and.arrow.up", count: nil)
-+                    }
-+                    .padding(.top, 8)
-+                    .frame(maxWidth: .infinity, alignment: .leading)
-+                }
-+                .contentShape(Rectangle())
-+            }
-+            .frame(maxWidth: .infinity, alignment: .leading)
-+        }
-+        .contentShape(Rectangle())
-+        .enableInjection()
-+    }
-+    
-+    // 抽取的头像视图
-+    private var avatarView: some View {
-+        Group {
-+            if viewModel.isLoading {
-+                ProgressView()
-+                    .frame(width: 44, height: 44)
-+            } else {
-+                KFImage(viewModel.getUserAvatarURL())
-+                    .placeholder {
-+                        Circle()
-+                            .fill(Color.gray)
-+                            .frame(width: 44, height: 44)
-+                    }
-+                    .resizable()
-+                    .scaledToFill()
-+                    .frame(width: 44, height: 44)
-+                    .clipShape(Circle())
-+            }
-+        }
-+    }
-+}
-+
-+// MARK: - 子视图
-+
-+private struct InteractionButton: View {
-+    let image: String
-+    let count: Int?
-+
-+    var body: some View {
-+        HStack(spacing: 4) {
-+            Image(systemName: image)
-+                .foregroundColor(.gray)
-+            if let count = count {
-+                Text("\(count)")
-+                    .font(.system(size: 12))
-+                    .foregroundColor(.gray)
-+            }
-+        }
-+    }
-+}
-+
 +import SwiftUI
 +
-+
-+struct FeedView: View {
++struct SearchView: View {
++    @EnvironmentObject private var authViewModel: AuthState
++    @ObservedObject var viewModel = SearchViewModel()
 +    @ObserveInjection var inject
-+    @Environment(\.diContainer) private var container
-+    @StateObject private var viewModel: FeedViewModel
-+
-+    init(container: DIContainer) {
-+        let tweetService: TweetServiceProtocol = container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL))
-+        _viewModel = StateObject(wrappedValue: FeedViewModel(tweetService: tweetService))
++  @Environment(\.diContainer) private var container
++    // 从 TopBar 传入的搜索状态
++    @Binding var searchText: String
++    @Binding var isEditing: Bool
++    
++    var users: [User] {
++        return searchText.isEmpty ? viewModel.users : viewModel.filteredUsers(searchText)
 +    }
 +
 +    var body: some View {
 +        ScrollView {
-+            LazyVStack(spacing: 16) {
-+                ForEach(viewModel.tweets) { tweet in
-+                    TweetCellView(
-+                        viewModel: TweetCellViewModel(
-+                            tweet: tweet,
-+                            tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),
-+                            onTweetUpdated: { updatedTweet in
-+                                viewModel.updateTweet(updatedTweet)
-+                            }
-+                        )
-+                    )
-+                    .padding(.horizontal)
-+                    Divider()
++            VStack {
++                LazyVStack {
++                    ForEach(users) { user in
++                      NavigationLink(destination: ProfileView(userId: user.id, diContainer: container)) {
++                            SearchUserCell(user: user)
++                                .padding(.leading)
++                        }
++                    }
 +                }
++                .transition(
++                    .asymmetric(
++                        insertion: .move(edge: .trailing).combined(with: .opacity),
++                        removal: .move(edge: .leading).combined(with: .opacity)
++                    )
++                )
 +            }
-+        }
-+        .refreshable {
-+            viewModel.fetchTweets()
-+        }
-+        .onAppear {
-+            viewModel.fetchTweets()
-+        }
-+        .overlay {
-+            if viewModel.isLoading {
-+                ProgressView()
-+            }
++            .animation(
++                .spring(
++                    response: 0.4,
++                    dampingFraction: 0.7,
++                    blendDuration: 0.2
++                ),
++                value: isEditing
++            )
 +        }
 +        .enableInjection()
 +    }
 +}
-+
-+
-+import SwiftUI
-+import Combine
-+
-+@MainActor
-+final class FeedViewModel: ObservableObject {
-+    @Published var tweets: [Tweet] = []
-+    @Published var isLoading = false
-+    @Published var error: Error?
-+    
-+    private let tweetService: TweetServiceProtocol
-+    private var refreshTask: Task<Void, Never>?
-+    
-+    init(tweetService: TweetServiceProtocol) {
-+        self.tweetService = tweetService
-+    }
-+    
-+    func fetchTweets() {
-+        isLoading = true
-+        error = nil
-+        
-+        refreshTask?.cancel()
-+        refreshTask = Task {
-+            do {
-+                tweets = try await tweetService.fetchTweets()
-+            } catch {
-+                self.error = error
-+                print("获取推文失败: \(error)")
-+            }
-+            isLoading = false
-+        }
-+    }
-+    
-+    // 提供一个更新单个推文的方法，供 TweetCellViewModel 调用
-+    func updateTweet(_ updatedTweet: Tweet) {
-+        if let index = tweets.firstIndex(where: { $0.id == updatedTweet.id }) {
-+            tweets[index] = updatedTweet
-+        }
-+    }
-+}
-+const express = require("express");
-+const Tweet = require("../models/Tweet");
-+const auth = require("../middleware/auth");
-+const multer = require("multer");
-+const sharp = require("sharp");
-+const router = new express.Router();
-+
-+// 配置 multer
-+const upload = multer({
-+  limits: {
-+    fileSize: 1000000, // 限制文件大小为1MB
-+  },
-+});
-+
-+router.post("/tweets", auth, async (req, res) => {
-+  try {
-+    const tweet = new Tweet({
-+      ...req.body,
-+      userId: req.user._id,
-+    });
-+    await tweet.save();
-+    res.status(201).send(tweet);
-+  } catch (error) {
-+    res.status(400).send(error);
-+  }
-+});
-+
-+// 获取所有推文可以保持公开
-+router.get("/tweets", async (req, res) => {
-+  try {
-+    const tweets = await Tweet.find()
-+      .populate("userId", "name username")
-+      .sort({ createdAt: -1 }); // 按时间倒序排列
-+    res.send(tweets);
-+  } catch (error) {
-+    res.status(500).send(error);
-+  }
-+});
-+
-+// 上传推文图片路由
-+router.post(
-+  "/tweets/:id/image",
-+  auth,
-+  upload.single("image"),
-+  async (req, res) => {
-+    try {
-+      const tweet = await Tweet.findOne({
-+        _id: req.params.id,
-+        userId: req.user._id,
-+      });
-+
-+      if (!tweet) {
-+        throw new Error("Tweet not found or unauthorized");
-+      }
-+
-+      // 使用 sharp 处理图片
-+      const buffer = await sharp(req.file.buffer)
-+        .resize(1080) // 调整宽度,保持宽高比
-+        .png()
-+        .toBuffer();
-+
-+      tweet.image = buffer;
-+      await tweet.save();
-+      res.send({ message: "Tweet image uploaded successfully" });
-+    } catch (error) {
-+      res.status(400).send({ error: error.message });
-+    }
-+  }
-+);
-+
-+// 获取推文图片路由
-+router.get("/tweets/:id/image", async (req, res) => {
-+  try {
-+    const tweet = await Tweet.findById(req.params.id);
-+
-+    if (!tweet || !tweet.image) {
-+      throw new Error("Tweet or image not found");
-+    }
-+
-+    res.set("Content-Type", "image/png");
-+    res.send(tweet.image);
-+  } catch (error) {
-+    res.status(404).send({ error: error.message });
-+  }
-+});
-+
-+// 点赞推文路由
-+router.put("/tweets/:id/like", auth, async (req, res) => {
-+  try {
-+    // 1. 查找推文
-+    const tweet = await Tweet.findById(req.params.id);
-+
-+    if (!tweet) {
-+      return res.status(404).send({ error: "Tweet not found" });
-+    }
-+
-+    // 2. 检查是否已经点赞
-+    if (!tweet.likes.includes(req.user._id)) {
-+      // 3. 添加点赞
-+      await Tweet.updateOne(
-+        { _id: req.params.id },
-+        {
-+          $push: { likes: req.user._id },
-+        }
-+      );
-+      res.status(200).send({ message: "Tweet has been liked" });
-+    } else {
-+      // 4. 已点赞则返回错误
-+      res.status(403).send({ error: "You have already liked this tweet" });
-+    }
-+  } catch (error) {
-+    res.status(500).send(error);
-+  }
-+});
-+
-+// ... existing code ...
-+
-+// 取消点赞推文路由
-+router.put("/tweets/:id/unlike", auth, async (req, res) => {
-+  try {
-+    // 1. 查找推文
-+    const tweet = await Tweet.findById(req.params.id);
-+
-+    if (!tweet) {
-+      return res.status(404).send({ error: "Tweet not found" });
-+    }
-+
-+    // 2. 检查是否已经点赞
-+    if (tweet.likes.includes(req.user._id)) {
-+      // 3. 移除点赞
-+      await Tweet.updateOne(
-+        { _id: req.params.id },
-+        {
-+          $pull: { likes: req.user._id },
-+        }
-+      );
-+      res.status(200).send({ message: "Tweet has been unliked" });
-+    } else {
-+      // 4. 未点赞则返回错误
-+      res.status(403).send({ error: "You have already unliked this tweet" });
-+    }
-+  } catch (error) {
-+    res.status(500).send(error);
-+  }
-+});
-+
-+
-+// 获取特定用户的推文
-+router.get("/tweets/user/:id", async (req, res) => {
-+  try {
-+    const tweets = await Tweet.find({
-+      userId: req.params.id,
-+    })
-+      .populate("userId", "name username")
-+      .sort({ createdAt: -1 });
-+
-+    if (!tweets || tweets.length === 0) {
-+      return res.status(404).send([]);
-+    }
-+
-+    res.send(tweets);
-+  } catch (error) {
-+    res.status(500).send(error);
-+  }
-+});
-+
-+
-+module.exports = router;
-+const mongoose = require("mongoose");
-+
-+const tweetSchema = new mongoose.Schema(
-+  {
-+    text: {
-+      type: String,
-+      required: true,
-+      trim: true,
-+    },
-+    userId: {
-+      type: mongoose.Schema.Types.ObjectId,
-+      required: true,
-+      ref: "User",
-+    },
-+    likes: [
-+      {
-+        type: mongoose.Schema.Types.ObjectId,
-+        ref: "User",
-+      },
-+    ],
-+    image: {
-+      type: Buffer,
-+    },
-+  },
-+  {
-+    timestamps: true, // 添加 createdAt 和 updatedAt 字段
-+  }
-+);
-+
-+
-+// 修改toJSON方法来处理图片属性
-+tweetSchema.methods.toJSON = function () {
-+  const tweet = this;
-+  const tweetObject = tweet.toObject();
-+
-+  // 检查图片是否存在
-+  if (tweetObject.image) {
-+    tweetObject.image = true;  // 如果存在图片,将image属性设置为true
-+  }
-+
-+  return tweetObject;
-+};
-+
-+
-+
-+const Tweet = mongoose.model("Tweet", tweetSchema);
-+
-+module.exports = Tweet;
+
+--- a/git.md
++++ b/git.md
+@@ -1,1016 +0,0 @@
+\ No newline at end of file

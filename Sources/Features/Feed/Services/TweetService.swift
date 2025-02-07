@@ -55,12 +55,26 @@ final class TweetService: TweetServiceProtocol {
     }
 
     func uploadImage(tweetId: String, image: UIImage) async throws -> ImageUploadResponse {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            throw NetworkError.custom("Failed to convert image to data")
+        return try await withCheckedThrowingContinuation { continuation in
+            ImageUploader.uploadImage(
+                paramName: "image",
+                fileName: "tweet.jpg",
+                image: image,
+                urlPath: "/tweets/\(tweetId)/image"
+            ) { result in
+                switch result {
+                case .success(let response):
+                    if let data = try? JSONSerialization.data(withJSONObject: response),
+                       let uploadResponse = try? JSONDecoder().decode(ImageUploadResponse.self, from: data) {
+                        continuation.resume(returning: uploadResponse)
+                    } else {
+                        continuation.resume(throwing: NetworkError.decodingError(NSError(domain: "", code: -1)))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
         }
-        
-        let endpoint = TweetEndpoint.uploadImage(tweetId: tweetId, imageData: imageData)
-        return try await apiClient.sendRequest(endpoint)
     }
 }
 

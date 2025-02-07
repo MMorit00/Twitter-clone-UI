@@ -117,32 +117,47 @@ enum TweetEndpoint: APIEndpoint {
         }
     }
 
+    var headers: [String: String]? {
+        var headers: [String: String] = [:]
+        
+        if case .uploadImage = self {
+            // 修改: 使用正确的 multipart Content-Type
+            let boundary = UUID().uuidString
+            headers["Content-Type"] = "multipart/form-data; boundary=\(boundary)"
+        } else {
+            headers["Content-Type"] = "application/json"
+        }
+        
+        if let token = UserDefaults.standard.string(forKey: "jwt") {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
+        return headers
+    }
+    
     var body: Data? {
         switch self {
         case let .createTweet(text, userId):
             let body = ["text": text, "userId": userId]
             return try? JSONSerialization.data(withJSONObject: body)
         case let .uploadImage(_, imageData):
-            return imageData
+            // 修改: 构造 multipart 请求体
+            let boundary = UUID().uuidString
+            var data = Data()
+            
+            // 添加图片数据
+            data.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+            data.append("Content-Disposition: form-data; name=\"image\"; filename=\"tweet.jpg\"\r\n".data(using: .utf8)!)
+            data.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            data.append(imageData)
+            data.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+            
+            return data
         default:
             return nil
         }
     }
-
-    var headers: [String: String]? {
-        var headers = ["Content-Type": "application/json"]
-
-        if case .uploadImage = self {
-            headers["Content-Type"] = "image/jpeg"
-        }
-
-        if let token = UserDefaults.standard.string(forKey: "jwt") {
-            headers["Authorization"] = "Bearer \(token)"
-        }
-
-        return headers
-    }
-
+    
     var queryItems: [URLQueryItem]? {
         return nil
     }

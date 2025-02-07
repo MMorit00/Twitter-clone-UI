@@ -372,8 +372,9 @@ struct TweetListView: View {
                 TweetCellView(
                     viewModel: TweetCellViewModel(
                         tweet: tweet,
-                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)), currentUserId: authViewModel.currentUser?.id ?? ""
+                        tweetService: container.resolve(.tweetService) ?? TweetService(apiClient: APIClient(baseURL: APIConfig.baseURL)),   notificationService:container.resolve(.notificationService) ?? NotificationService(apiClient:APIClient( baseURL: APIConfig.baseURL)), currentUserId: authViewModel.currentUser?.id ?? ""
                     )
+                 
                 )
                 Divider()
             }

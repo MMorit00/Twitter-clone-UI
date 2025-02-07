@@ -51,7 +51,7 @@ final class DIContainer {
         container.register(apiClient, type: .apiClient)
         
         // 配置 AuthService
-      let authService = AuthService1(apiClient: apiClient) // 示例调用，实际请使用正确构造函数
+        let authService = AuthService1(apiClient: apiClient)
         container.register(authService, type: .authService)
         
         // 配置 TweetService
@@ -61,6 +61,10 @@ final class DIContainer {
         // 配置 ProfileService
         let profileService = ProfileService(apiClient: apiClient)
         container.register(profileService, type: .profileService)
+        
+        // 配置 NotificationService
+        let notificationService = NotificationService(apiClient: apiClient)
+        container.register(notificationService, type: .notificationService)
         
         return container
     }

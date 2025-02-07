@@ -18,16 +18,18 @@ struct HomeView: View {
                     }
                     .tag(0)
 
-//                SearchView(searchText: $searchText, isEditing: $isSearching)
-              EmptyView()
+                SearchView(searchText: $searchText, isEditing: $isSearching)
+             
                     .tabItem {
                         Image(systemName: "magnifyingglass")
                         Text("Search")
                     }
                     .tag(1)
                 
-//              NotificationsView(user: viewModel.user!)
-              EmptyView()
+                NotificationsView(
+                    user: viewModel.currentUser ?? User.mock,
+                    service: container.resolve(.notificationService) ?? NotificationService(apiClient:APIClient( baseURL: APIConfig.baseURL))
+                )
                     .tabItem {
                         Image(systemName: "bell")
                         Text("Notifications")
