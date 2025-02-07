@@ -4,10 +4,11 @@ struct MainView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showMenu = false
     @State private var showProfile = false
+    @State private var profileUserId: String? = nil  // 新增：用于存储用户 ID
     @State private var offset: CGFloat = 0
     @State private var selectedTab = 0 // 添加这行
     @EnvironmentObject private var viewModel: AuthState
-  @Environment(\.diContainer) private var diContainer: DIContainer 
+    @Environment(\.diContainer) private var diContainer: DIContainer 
 
     // 侧边菜单宽度（为了方便修改）
     private var menuWidth: CGFloat {
@@ -50,13 +51,15 @@ struct MainView: View {
                     .allowsHitTesting(showMenu)
 
                 // 2. 侧边菜单视图
-//                SlideMenu(onProfileTap: {
-//                    showProfile = true
-//                })
-//                .frame(width: menuWidth)
-//                .background(Color.white)
-//                .offset(x: offset - menuWidth)
-//                .zIndex(2) // 添加最高层级
+                SlideMenu(onProfileTap: { userId in
+                    // 当点击头像时，将传入的 userId 存储，并触发导航到 ProfileView
+                    self.profileUserId = userId
+                    self.showProfile = true
+                })
+                .frame(width: menuWidth)
+                .background(Color.white)
+                .offset(x: offset - menuWidth)
+                .zIndex(2) // 添加最高层级
 
                 // 3. 用于菜单拖拽手势的透明层
                 if showMenu {
@@ -77,10 +80,11 @@ struct MainView: View {
                         .zIndex(1)
                 }
             }
+            // 导航到 ProfileView 时传入 profileUserId（此处 profileUserId 为非 nil 的当前用户 ID）
             .navigationDestination(isPresented: $showProfile) {
-                ProfileView(userId: nil, diContainer: diContainer)
+                ProfileView(userId: profileUserId, diContainer: diContainer)
             }
-            .toolbar(.hidden, for: .tabBar) // 只隐藏tabBar
+            .toolbar(.hidden, for: .tabBar) // 只隐藏 tabBar
         }
     }
 
