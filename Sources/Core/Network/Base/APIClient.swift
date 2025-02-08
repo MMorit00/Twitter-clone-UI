@@ -10,6 +10,7 @@ extension URLSession: URLSessionProtocol {}
 /// API客户端协议
 protocol APIClientProtocol {
     func sendRequest<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T
+    func sendRequestWithoutDecoding(_ endpoint: APIEndpoint) async throws
 }
 
 /// API客户端实现，处理所有网络请求
@@ -63,6 +64,8 @@ final class APIClient: APIClientProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
         request.httpBody = endpoint.body
+        // 添加：避免使用缓存
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         endpoint.headers?.forEach { key, value in
@@ -124,6 +127,66 @@ final class APIClient: APIClientProtocol {
         }
     }
 
+  /// 新增方法：发送请求但不对响应内容进行解码，用于图片上传等返回数据格式不确定的接口
+   func sendRequestWithoutDecoding(_ endpoint: APIEndpoint) async throws {
+       var attempts = 0
+
+       while attempts < maxRetries {
+           do {
+               try await performRequestWithoutDecoding(endpoint)
+               return
+           } catch NetworkError.serverError {
+               attempts += 1
+               if attempts == maxRetries {
+                   throw NetworkError.maxRetriesExceeded
+               }
+               try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(attempts))) * 1_000_000_000)
+           }
+       }
+
+       throw NetworkError.maxRetriesExceeded
+   }
+
+   /// 执行实际网络请求但不进行数据解码
+   private func performRequestWithoutDecoding(_ endpoint: APIEndpoint) async throws {
+       var components = URLComponents(url: baseURL.appendingPathComponent(endpoint.path),
+                                      resolvingAgainstBaseURL: true)
+       components?.queryItems = endpoint.queryItems
+
+       guard let url = components?.url else {
+           throw NetworkError.invalidURL
+       }
+
+       var request = URLRequest(url: url)
+       request.httpMethod = endpoint.method.rawValue
+       request.httpBody = endpoint.body
+       request.cachePolicy = .reloadIgnoringLocalCacheData
+        
+        endpoint.headers?.forEach { key, value in
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200...299:
+            return  // 成功，不解析返回数据
+        case 401:
+            throw NetworkError.unauthorized
+        case 400...499:
+            throw NetworkError.clientError(try? decodeErrorResponse(from: data))
+        case 500...599:
+            throw NetworkError.serverError
+        default:
+            throw NetworkError.httpError(httpResponse.statusCode)
+        }
+   }
+  
+  
     #if DEBUG
         private func logRequest(_ request: URLRequest) {
             print("🚀 发送请求: \(request.httpMethod ?? "Unknown") \(request.url?.absoluteString ?? "")")

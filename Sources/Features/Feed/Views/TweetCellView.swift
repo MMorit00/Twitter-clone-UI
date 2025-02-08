@@ -5,7 +5,8 @@ struct TweetCellView: View {
     @ObserveInjection var inject
     @ObservedObject var viewModel: TweetCellViewModel
     @Environment(\.diContainer) private var container
-
+    @EnvironmentObject var authState: AuthState  // 直接获取全局 AuthState
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // 如果点赞数大于 0，则显示点赞数
@@ -19,7 +20,7 @@ struct TweetCellView: View {
                 }
                 .padding(.trailing, 16)
             }
-
+            
             HStack(alignment: .top, spacing: 12) {
                 // 头像区域：点击跳转到对应用户的个人主页
                 NavigationLink {
@@ -27,7 +28,7 @@ struct TweetCellView: View {
                 } label: {
                     avatarView
                 }
-
+                
                 // 推文内容区域
                 VStack(alignment: .leading, spacing: 4) {
                     // 用户信息
@@ -38,18 +39,17 @@ struct TweetCellView: View {
                             .foregroundColor(.gray)
                         Text("·")
                             .foregroundColor(.gray)
-                        // 目前固定显示时间，后续可根据需求格式化
                         Text("11h")
                             .foregroundColor(.gray)
                     }
                     .font(.system(size: 16))
-
+                    
                     // 推文文本
                     Text(viewModel.tweet.text)
                         .font(.system(size: 16))
                         .frame(maxHeight: 100)
                         .lineSpacing(4)
-
+                    
                     // 推文图片（如果存在）
                     if viewModel.tweet.image == true {
                         GeometryReader { proxy in
@@ -62,12 +62,12 @@ struct TweetCellView: View {
                         .frame(height: 200)
                         .zIndex(0)
                     }
-
+                    
                     // 互动按钮区域
                     HStack(spacing: 40) {
                         InteractionButton(image: "message", count: 0)
                         InteractionButton(image: "arrow.2.squarepath", count: 0)
-
+                        
                         Button(action: {
                             if viewModel.isLiked {
                                 viewModel.unlikeTweet()
@@ -88,7 +88,7 @@ struct TweetCellView: View {
                         .zIndex(1)
                         .padding(8)
                         .contentShape(Rectangle())
-
+                        
                         InteractionButton(image: "square.and.arrow.up", count: nil)
                     }
                     .padding(.top, 8)
@@ -101,10 +101,10 @@ struct TweetCellView: View {
         .contentShape(Rectangle())
         .enableInjection()
     }
-
-    // 抽取的头像视图
+    
+    // 使用全局 AuthState 重新计算头像 URL
     private var avatarView: some View {
-        KFImage(viewModel.getUserAvatarURL())
+        KFImage(getAvatarURL())
             .placeholder {
                 Circle()
                     .fill(Color.gray)
@@ -114,6 +114,17 @@ struct TweetCellView: View {
             .scaledToFill()
             .frame(width: 44, height: 44)
             .clipShape(Circle())
+            .onAppear {
+                // 可选：在 onAppear 清除缓存，确保加载最新图片
+                if let url = getAvatarURL() {
+                    KingfisherManager.shared.cache.removeImage(forKey: url.absoluteString)
+                }
+            }
+    }
+    
+    private func getAvatarURL() -> URL? {
+        // 调用 TweetCellViewModel 中的方法，传入全局 authState
+        return viewModel.getUserAvatarURL(from: authState)
     }
 }
 
@@ -122,7 +133,7 @@ struct TweetCellView: View {
 private struct InteractionButton: View {
     let image: String
     let count: Int?
-
+    
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: image)

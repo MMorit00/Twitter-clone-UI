@@ -11,22 +11,22 @@ class SearchViewModel: ObservableObject {
     }
     
     func fetchUsers() {
-        AuthService.requestDomain = "http://localhost:3000/users"
-        
-        AuthService.fetchUsers { res in
-            switch res {
-                case .success(let data):
-                guard let users = try? JSONDecoder().decode([User].self, from: data!) else {
-                        return
-                    }
-                    DispatchQueue.main.async {
-                        self.users = users
-                    }
-
-                case .failure(let error):
-                    print(error.localizedDescription)
-            }
-        }
+//        AuthService.requestDomain = "http://localhost:3000/users"
+//        
+//        AuthService.fetchUsers { res in
+//            switch res {
+//                case .success(let data):
+//                guard let users = try? JSONDecoder().decode([User].self, from: data!) else {
+//                        return
+//                    }
+//                    DispatchQueue.main.async {
+//                        self.users = users
+//                    }
+//
+//                case .failure(let error):
+//                    print(error.localizedDescription)
+//            }
+//        }
     }
     
     func filteredUsers(_ query: String) -> [User] {

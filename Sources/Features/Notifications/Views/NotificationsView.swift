@@ -9,29 +9,37 @@ struct NotificationsView: View {
 
     var body: some View {
         ZStack {
-            // 如果没有加载过数据，并且正在加载时显示 ProgressView，否则显示内容
+            // 如果数据正在加载且列表为空，则显示加载指示器，否则显示内容
             if viewModel.isLoading && viewModel.notifications.isEmpty {
                 ProgressView()
             } else {
                 content
             }
         }
-        // 使用动态绑定控制 Alert 的显示
-        .alert("错误", isPresented: Binding(
-            get: { viewModel.error != nil },
-            set: { _ in viewModel.clearError() }
-        )) {
-            Button("确定") {
-                viewModel.clearError()
-            }
-        } message: {
-            if let error = viewModel.error {
-                Text(error.localizedDescription)
-            }
-        }
-        // 视图首次出现时加载通知
+//        // 通过 Alert 显示错误信息
+//        .alert("错误", isPresented: Binding(
+//            get: { viewModel.error != nil },
+//            set: { _ in viewModel.clearError() }
+//        )) {
+//            Button("确定") {
+//                viewModel.clearError()
+//            }
+//        } message: {
+//            if let error = viewModel.error {
+//                Text(error.localizedDescription)
+//            }
+//        }
+        // 视图首次加载时调用一次
         .task {
             await viewModel.fetchNotifications()
+        }
+        // 每隔 5 秒自动刷新一次（避免多次并发刷新）
+        .onReceive(Timer.publish(every: 5, on: .main, in: .common).autoconnect()) { _ in
+            if !viewModel.isLoading {
+                Task {
+                    await viewModel.fetchNotifications()
+                }
+            }
         }
     }
 
@@ -48,7 +56,7 @@ struct NotificationsView: View {
                 }
             }
         }
-        // 下拉刷新时重新加载数据
+        // 下拉刷新时调用 refreshNotifications()
         .refreshable {
             await viewModel.refreshNotifications()
         }

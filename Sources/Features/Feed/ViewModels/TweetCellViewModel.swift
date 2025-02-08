@@ -25,12 +25,12 @@ final class TweetCellViewModel: ObservableObject {
         self.onTweetUpdated = onTweetUpdated
     }
     
-    /// 通过比较 likes 数组判断是否已点赞
+    /// 判断当前用户是否已点赞
     var isLiked: Bool {
         tweet.likes?.contains(currentUserId) ?? false
     }
     
-    /// 点赞数
+    /// 点赞数量
     var likesCount: Int {
         tweet.likes?.count ?? 0
     }
@@ -43,7 +43,7 @@ final class TweetCellViewModel: ObservableObject {
             return
         }
         
-        // 乐观更新点赞状态
+        // 乐观更新：先在本地添加当前用户
         if tweet.likes == nil {
             tweet.likes = [currentUserId]
         } else if !(tweet.likes!.contains(currentUserId)) {
@@ -54,12 +54,10 @@ final class TweetCellViewModel: ObservableObject {
         
         Task {
             do {
-                // 发送点赞请求
                 let updatedTweet = try await tweetService.likeTweet(tweetId: tweet.id)
                 self.tweet = updatedTweet
                 onTweetUpdated?(updatedTweet)
-                
-                // 发送通知
+                // 同时发送通知（如需要）
                 try await notificationService.createNotification(
                     username: tweet.username,
                     receiverId: tweet.userId,
@@ -67,8 +65,7 @@ final class TweetCellViewModel: ObservableObject {
                     postText: tweet.text
                 )
             } catch {
-                print("点赞失败: \(error)")
-                // 回滚点赞状态
+                // 回滚本地状态
                 if var likes = tweet.likes {
                     likes.removeAll { $0 == currentUserId }
                     tweet.likes = likes
@@ -82,13 +79,10 @@ final class TweetCellViewModel: ObservableObject {
     /// 取消点赞操作（乐观更新）
     func unlikeTweet() {
         guard !isLikeActionLoading else { return }
-        
-        // 乐观更新：移除 likes 数组中的当前用户 id
         if var likes = tweet.likes {
             likes.removeAll { $0 == currentUserId }
             tweet.likes = likes
         }
-        
         isLikeActionLoading = true
         
         Task {
@@ -97,8 +91,7 @@ final class TweetCellViewModel: ObservableObject {
                 self.tweet = updatedTweet
                 onTweetUpdated?(updatedTweet)
             } catch {
-                print("取消点赞失败: \(error)")
-                // 回滚：如果失败则将当前用户 id 加回去
+                // 回滚：将当前用户重新加回去
                 if tweet.likes == nil {
                     tweet.likes = [currentUserId]
                 } else if !(tweet.likes!.contains(currentUserId)) {
@@ -110,8 +103,14 @@ final class TweetCellViewModel: ObservableObject {
         }
     }
     
-    /// 获取头像 URL，不依赖点赞 loading 状态
-    func getUserAvatarURL() -> URL? {
-        URL(string: "http://localhost:3000/users/\(tweet.userId)/avatar")
+    /// 根据传入的全局 AuthState 生成头像 URL（带时间戳以避免缓存问题）
+    func getUserAvatarURL(from authState: AuthState) -> URL? {
+        // 如果当前 tweet 用户与全局 currentUser 相同，则附加时间戳
+        if authState.currentUser?.id == tweet.userId {
+            let timestamp = Int(Date().timeIntervalSince1970)
+            return URL(string: "http://localhost:3000/users/\(tweet.userId)/avatar?t=\(timestamp)")
+        } else {
+            return URL(string: "http://localhost:3000/users/\(tweet.userId)/avatar")
+        }
     }
 }

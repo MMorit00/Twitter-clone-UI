@@ -1,20 +1,25 @@
 import SwiftUI
 import Foundation
+import Kingfisher
+
+// Fix notification name definition
+extension NSNotification.Name {
+    static let didUpdateProfile = NSNotification.Name("didUpdateProfile")
+}
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
     private let profileService: ProfileServiceProtocol
-    private let userId: String?  // 外部传入的目标用户ID；若为 nil，则表示显示当前用户
+    private let userId: String?
     
     @Published var user: User?
     @Published var tweets: [Tweet] = []
     @Published var isLoading = false
-    @Published var errorMessage: String?  // 重命名为 errorMessage
+    @Published var errorMessage: String?
     @Published var shouldRefreshImage = false
     
-    private var lastImageRefreshTime: TimeInterval = 0
+    private(set) var lastImageRefreshTime: TimeInterval = Date().timeIntervalSince1970
     
-    // 如果 userId 为 nil，则表示显示当前用户的资料
     var isCurrentUser: Bool {
         guard let profileUserId = user?.id else { return false }
         return userId == nil || userId == profileUserId
@@ -35,21 +40,12 @@ final class ProfileViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            // 如果 userId 为 nil，则使用当前已加载的 user 的 id（或者你可以通过父视图传入当前用户ID）
-            let targetUserId = userId ?? self.user?.id
-            guard let targetUserId = targetUserId else {
-                throw NetworkError.custom("No user ID available")
-            }
-            
-            async let profile = self.profileService.fetchUserProfile(userId: targetUserId)
-            async let userTweets = self.profileService.fetchUserTweets(userId: targetUserId)
-           
+            let targetUserId = userId ?? self.user?.id ?? "me"
+            async let profile = profileService.fetchUserProfile(userId: targetUserId)
+            async let userTweets = profileService.fetchUserTweets(userId: targetUserId)
             let (fetchedProfile, fetchedTweets) = try await (profile, userTweets)
-          
-     
             self.user = fetchedProfile
             self.tweets = fetchedTweets
-            
         } catch let networkError as NetworkError {
             errorMessage = networkError.errorDescription
         } catch {
@@ -63,8 +59,12 @@ final class ProfileViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            let updatedUser = try await self.profileService.updateProfile(data: data)
+            let updatedUser = try await profileService.updateProfile(data: data)
             self.user = updatedUser
+            self.lastImageRefreshTime = Date().timeIntervalSince1970
+            self.shouldRefreshImage.toggle()
+            // 发布通知，传递最新的用户数据
+            NotificationCenter.default.post(name: .didUpdateProfile, object: updatedUser)
         } catch let networkError as NetworkError {
             errorMessage = networkError.errorDescription
         } catch {
@@ -73,28 +73,21 @@ final class ProfileViewModel: ObservableObject {
     }
     
     func uploadAvatar(imageData: Data) async {
-        await performImageUpload {
-            try await self.profileService.uploadAvatar(imageData: imageData)
-        }
-    }
-    
-    // 如果后端不支持上传 Banner，建议移除此方法或返回错误
-    func uploadBanner(imageData: Data) async {
-        await performImageUpload {
-            try await self.profileService.uploadBanner(imageData: imageData)
-        }
-    }
-    
-    private func performImageUpload(_ upload: @escaping () async throws -> User) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         
         do {
-            let updatedUser = try await upload()
+            let updatedUser = try await profileService.uploadAvatar(imageData: imageData)
             self.user = updatedUser
             self.lastImageRefreshTime = Date().timeIntervalSince1970
             self.shouldRefreshImage.toggle()
+            if let url = getAvatarURL() {
+                try await KingfisherManager.shared.cache.removeImage(forKey: url.absoluteString)
+            }
+            // 发布通知，全局更新
+            NotificationCenter.default.post(name: .didUpdateProfile, object: updatedUser)
+            try await fetchProfile()
         } catch let networkError as NetworkError {
             errorMessage = networkError.errorDescription
         } catch {
@@ -108,11 +101,3 @@ final class ProfileViewModel: ObservableObject {
         return URL(string: "\(baseURL)?t=\(Int(lastImageRefreshTime))")
     }
 }
-
-#if DEBUG
-extension ProfileViewModel {
-    static var preview: ProfileViewModel {
-        ProfileViewModel(profileService: MockProfileService())
-    }
-}
-#endif

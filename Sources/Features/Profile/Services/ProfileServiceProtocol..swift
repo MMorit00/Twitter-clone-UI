@@ -16,6 +16,7 @@ protocol ProfileServiceProtocol {
     func fetchUserTweets(userId: String) async throws -> [Tweet]
     func uploadAvatar(imageData: Data) async throws -> User
     func uploadBanner(imageData: Data) async throws -> User
+  
 }
 
 final class ProfileService: ProfileServiceProtocol {
@@ -40,14 +41,20 @@ final class ProfileService: ProfileServiceProtocol {
         return try await apiClient.sendRequest(endpoint)
     }
     
+    /// 修改后的上传头像逻辑  
+    /// 第一步调用 sendRequestWithoutDecoding 上传图片（不解码响应），
+    /// 第二步调用 fetchUserProfile 获取更新后的用户数据
     func uploadAvatar(imageData: Data) async throws -> User {
-        let endpoint = ProfileEndpoint.uploadAvatar(imageData: imageData)
-        return try await apiClient.sendRequest(endpoint)
+        let uploadEndpoint = ProfileEndpoint.uploadAvatar(imageData: imageData)
+        try await apiClient.sendRequestWithoutDecoding(uploadEndpoint)
+        // 上传成功后获取最新用户数据
+        return try await fetchUserProfile(userId: "me")
     }
-    
+
     func uploadBanner(imageData: Data) async throws -> User {
-        let endpoint = ProfileEndpoint.uploadBanner(imageData: imageData)
-        return try await apiClient.sendRequest(endpoint)
+        let uploadEndpoint = ProfileEndpoint.uploadBanner(imageData: imageData)
+        try await apiClient.sendRequestWithoutDecoding(uploadEndpoint)
+        return try await fetchUserProfile(userId: "me")
     }
 }
 

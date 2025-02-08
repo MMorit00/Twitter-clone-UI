@@ -6,38 +6,39 @@ final class NotificationsViewModel: ObservableObject {
     @Published private(set) var notifications: [Notification] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
-
+    
     // 依赖注入
     private let service: NotificationServiceProtocol
     private let user: User
-    // 标志，防止重复加载
-    private var didFetch = false
 
     init(user: User, service: NotificationServiceProtocol) {
         self.user = user
         self.service = service
     }
-
-    /// 获取通知列表（首次加载时调用）
+    
+    /// 获取通知列表，每次调用都会重新加载数据
     func fetchNotifications() async {
-        // 若正在加载或已经加载过则直接返回
-        guard !isLoading, !didFetch else { return }
+        // 如果正在加载，则直接返回，防止并发调用
+        guard !isLoading else { return }
         isLoading = true
         error = nil
         do {
-            notifications = try await service.fetchNotifications(userId: user.id)
-            didFetch = true
+            let newNotifications = try await service.fetchNotifications(userId: user.id)
+            notifications = newNotifications
         } catch {
-            self.error = error
-            print("Failed to fetch notifications: \(error)")
+            // 如果错误是任务取消，则忽略错误，不赋值 error
+            if error is CancellationError {
+                print("Fetch notifications cancelled. Ignoring cancellation error.")
+            } else {
+                self.error = error
+                print("Failed to fetch notifications: \(error)")
+            }
         }
         isLoading = false
     }
     
-    /// 刷新通知列表（下拉刷新时调用）
+    /// 刷新通知列表，直接调用 fetchNotifications()
     func refreshNotifications() async {
-        // 清除标志后重新加载数据
-        didFetch = false
         await fetchNotifications()
     }
     
@@ -54,8 +55,12 @@ final class NotificationsViewModel: ObservableObject {
                 // 新通知插入列表最前面
                 notifications.insert(newNotification, at: 0)
             } catch {
-                self.error = error
-                print("Failed to create notification: \(error)")
+                if error is CancellationError {
+                    print("Create notification cancelled. Ignoring cancellation error.")
+                } else {
+                    self.error = error
+                    print("Failed to create notification: \(error)")
+                }
             }
         }
     }

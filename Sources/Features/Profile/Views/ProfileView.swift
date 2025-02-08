@@ -64,7 +64,7 @@ struct ProfileView: View {
                 GeometryReader { proxy -> AnyView in
                     // 使用命名坐标空间 "scroll" 得到准确的偏移
                     let minY = proxy.frame(in: .named("scroll")).minY
-                    return AnyView(
+                  AnyView(
                         ZStack {
                             // Banner 图片：高度为 180，下拉时高度增加
                             Image("SSC_banner")
@@ -169,7 +169,8 @@ struct ProfileView: View {
                             .sheet(isPresented: $editProfileShow, onDismiss: {
                                 KingfisherManager.shared.cache.clearCache()
                             }, content: {
-                                // EditProfileView(user: $viewModel.user)
+                              EditProfileView(viewModel: viewModel)
+                              
                             })
                         }
                     }

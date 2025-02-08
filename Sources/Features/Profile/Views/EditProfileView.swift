@@ -15,6 +15,8 @@ struct EditProfileView: View {
     // 图片相关状态
     @State private var profileImage: UIImage?
     @State private var bannerImage: UIImage?
+    @State private var showError = false
+    @State private var errorMessage: String?
 
     // 图片选择器相关状态
     @State private var showImagePicker = false
@@ -215,12 +217,14 @@ struct EditProfileView: View {
                                 "website": website,
                                 "location": location,
                             ])
+                            authState.currentUser = viewModel.user
+                            mode.wrappedValue.dismiss()
                         }
                     }) {
                         Text("Save")
                             .bold()
-                            .disabled(viewModel.isLoading) // or some other condition
                     }
+                    .disabled(viewModel.isLoading)
                 }
                 .padding()
                 .background(Material.ultraThin)
@@ -229,50 +233,94 @@ struct EditProfileView: View {
                 Spacer()
             }
 
-            // ImagePicker 弹窗
+            // ImagePicker 弹窗部分
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(image: $selectedImage)
                     .presentationDetents([.large])
                     .edgesIgnoringSafeArea(.all)
                     .onDisappear {
-                        guard let image = selectedImage else { return }
-
-                        // 将选中的 UIImage 转成 jpegData
-                        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
-
-                        switch imagePickerType {
-                        case .profile:
-                            // 上传头像
-                            Task {
-                                await viewModel.uploadAvatar(imageData: data)
-                            }
-                            profileImage = image // 更新界面预览
-
-                        case .banner:
-                            // 上传 banner
-                            Task {
-                                await viewModel.uploadBanner(imageData: data)
-                            }
-                            bannerImage = image // 更新界面预览
+                        Task {
+                            await handleSelectedImage()
                         }
-
-                        selectedImage = nil
                     }
             }
+            .alert("上传失败", isPresented: $showError) {
+                Button("确定", role: .cancel) {
+                    errorMessage = nil
+                }
+            } message: {
+                Text(errorMessage ?? "未知错误")
+            }
         }
-        // 当上传或更新完成后，自动关闭
-        .onReceive(viewModel.$shouldRefreshImage) { _ in
-            // 如果需要在图片上传完立即退出，可在这里进行 dismiss
-//            mode.dismss()
-        }
-        // 如果希望等待一切保存都完成再退出，可另加逻辑
-        .onReceive(viewModel.$user) { updatedUser in
-            // 可选：若 updatedUser != nil，说明资料更新完毕
-//            updatedUser != nil
-        }
+//      .onReceive(viewModel.$shouldRefreshImage) { _ in
+//     // mode.wrappedValue.dismiss()
+        // }
+//         .onReceive(viewModel.$user) { updatedUser in
+//             // 可选：若 updatedUser != nil，说明资料更新完毕
+//         }
         .onAppear {
             // 可选：清除缓存或其他逻辑
             KingfisherManager.shared.cache.clearCache()
         }
+    }
+}
+
+extension EditProfileView {
+  private func handleSelectedImage() async {
+        guard let image = selectedImage else { return }
+
+        // 根据选择类型判断上传头像或banner
+        if imagePickerType == .profile {
+            profileImage = image
+
+            // 注意：字段名称需要与后端保持一致，此处传 "avatar"
+            ImageUploader.uploadImage(
+                paramName: "avatar", // 修改前为 "image"，现改为 "avatar"
+                fileName: "avatar.jpg",
+                image: image,
+                urlPath: "/users/me/avatar"
+            ) { result in
+                Task { @MainActor in
+                    switch result {
+                    case .success:
+                        // 上传成功后刷新个人资料
+                        await viewModel.fetchProfile()
+                    case let .failure(error):
+                        errorMessage = error.localizedDescription
+                        showError = true
+                    }
+                }
+            }
+
+            await viewModel.uploadAvatar(imageData: image.jpegData(compressionQuality: 0.8)!)
+
+            // 清除所有头像缓存
+            await KingfisherManager.shared.cache.clearMemoryCache()
+            await KingfisherManager.shared.cache.clearDiskCache()
+
+        } else if imagePickerType == .banner {
+            bannerImage = image
+            // 如果需要上传 banner，可类似实现：
+            /*
+             ImageUploader.uploadImage(
+                 paramName: "banner",
+                 fileName: "banner.jpg",
+                 image: image,
+                 urlPath: "/users/me/banner"
+             ) { result in
+                 Task { @MainActor in
+                     switch result {
+                     case .success(_):
+                         await viewModel.fetchProfile()
+                     case .failure(let error):
+                         errorMessage = error.localizedDescription
+                         showError = true
+                     }
+                 }
+             }
+             */
+        }
+
+        selectedImage = nil
     }
 }
