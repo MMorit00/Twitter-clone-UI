@@ -1,11 +1,9 @@
 
 # TwitterClone
 
-一款基于SwiftUI的iOS应用程序，模拟了Twitter的核心功能——注册、登录、发布推文、点赞、关注、编辑个人资料、搜索、查看通知等。该应用程序使用Swift编写，采用MVVM架构，并使用**依赖注入（DI）**来管理其服务。
+一款基于SwiftUI的iOS应用程序，模拟了Twitter的核心功能——注册、登录、发布推文、点赞、关注、编辑个人资料、搜索、查看通知等。该应用程序使用Swift编写，采用MVVM架构，并使用（DI)**依赖注入**来管理其服务。
 
-<div align="center">
-<img src="https://user-images.githubusercontent.com/placeholder/your-app-screenshot.png" width="350" alt="App screenshot" />
-</div>
+
 
 ## 目录
 - [TwitterClone](#twitterclone)
