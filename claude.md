@@ -245,3 +245,6 @@ Before presenting the final response, Claude should quickly ensure the response:
 
 > Claude must follow this protocol in all languages.
 > </anthropic_thinking_protocol>
+
+
+

@@ -1,6 +1,6 @@
 import os
 
-def merge_swift_files(directory_path, output_file):
+def merge_swift_files(directory_path, output_file, subfolders=None):
     # 确保输出文件的目录存在
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
@@ -9,10 +9,15 @@ def merge_swift_files(directory_path, output_file):
     
     # 遍历目录
     for root, dirs, files in os.walk(directory_path):
+        # 如果指定了子文件夹，检查当前目录是否在指定的子文件夹中
+        if subfolders:
+            relative_path = os.path.relpath(root, directory_path)
+            if relative_path == '.' or not any(relative_path.startswith(subfolder) for subfolder in subfolders):
+                continue
+        
         for file in files:
             if file.endswith('.swift'):
                 full_path = os.path.join(root, file)
-                # 检查文件是否与输出文件相同
                 if os.path.abspath(full_path) != os.path.abspath(output_file):
                     swift_files.append(full_path)
     
@@ -36,6 +41,11 @@ if __name__ == "__main__":
     source_directory = "/Users/panlingchuan/Downloads/My Project/Twitter-clone/Sources"
     output_path = "/Users/panlingchuan/Downloads/My Project/Twitter-clone/merged_code.swift"
     
+    # 获取用户输入的子文件夹
+    print("请输入要合并的子文件夹名称（多个文件夹用空格分隔，直接回车则合并所有文件）：")
+    subfolder_input = input().strip()
+    subfolders = subfolder_input.split() if subfolder_input else None
+    
     # 执行合并
-    merge_swift_files(source_directory, output_path)
+    merge_swift_files(source_directory, output_path, subfolders)
     print(f"合并完成！输出文件: {output_path}")
